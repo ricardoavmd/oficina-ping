@@ -303,7 +303,7 @@ var THEMES = [
   { id:'hielo', name:'Hielo', colors:['#caf0f8','#03045e','#0077b6'] }
 ];
 
-var GIPHY_KEY = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L59';
+var TENOR_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCY0';
 var myName = '';
 var replyTo = null;
 var typingTimer = null;
@@ -438,6 +438,11 @@ function startApp() {
   document.getElementById('chatScreen').classList.add('visible');
   document.getElementById('myAvatarDisplay').textContent = myName[0].toUpperCase();
   document.getElementById('statusText').textContent = 'Conectado como ' + myName;
+
+  // Solicitar permiso de notificaciones del sistema
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
 
   var myPresRef = db.ref('presence/' + myName);
   function heartbeat() { myPresRef.set({ ts: Date.now(), name: myName }); }
@@ -682,7 +687,9 @@ function showNotifOverlay(sender) {
   document.getElementById('notifTitle').textContent = '¡' + sender + ' mandó un PING!';
   document.getElementById('notifBody').textContent = sender + ' necesita tu atención ahora.';
   document.getElementById('notifOverlay').classList.add('show');
-  playBeep(true); startBlink(sender);
+  playBeep(true);
+  startBlink(sender);
+  fireSystemNotif('🔴 PING de ' + sender, sender + ' necesita tu atención ahora. Haz clic para ver.');
 }
 function dismissNotif() { document.getElementById('notifOverlay').classList.remove('show'); clearBlink(); }
 
@@ -694,6 +701,7 @@ function notifyMsg(sender) {
     badge.textContent = unread + ' nuevo' + (unread > 1 ? 's' : '');
     badge.classList.add('show');
     startBlink(sender);
+    fireSystemNotif('Mensaje de ' + sender, 'Tienes ' + unread + ' mensaje(s) nuevo(s) en Ping Oficina.');
   }
 }
 
@@ -720,22 +728,23 @@ function searchGifs() {
   if (!q) return;
   var grid = document.getElementById('gifGrid');
   grid.innerHTML = '<div class="gif-loading">Buscando...</div>';
-  fetch('https://api.giphy.com/v1/gifs/search?api_key=' + GIPHY_KEY + '&q=' + encodeURIComponent(q) + '&limit=12&rating=g')
+  var url = 'https://tenor.googleapis.com/v2/search?q=' + encodeURIComponent(q) + '&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCY0&limit=12&media_filter=gif';
+  fetch(url)
     .then(function(r) { return r.json(); })
     .then(function(json) {
       grid.innerHTML = '';
-      if (!json.data || json.data.length === 0) { grid.innerHTML = '<div class="gif-loading">Sin resultados</div>'; return; }
-      json.data.forEach(function(gif) {
-        var url = gif.images.fixed_width_small.url;
-        var original = gif.images.fixed_width.url;
+      if (!json.results || json.results.length === 0) { grid.innerHTML = '<div class="gif-loading">Sin resultados 😅</div>'; return; }
+      json.results.forEach(function(gif) {
+        var preview = gif.media_formats.tinygif ? gif.media_formats.tinygif.url : gif.media_formats.gif.url;
+        var full = gif.media_formats.gif.url;
         var el = document.createElement('div');
         el.className = 'gif-item';
-        el.innerHTML = '<img src="' + url + '" loading="lazy" />';
-        el.addEventListener('click', function() { sendGif(original); });
+        el.innerHTML = '<img src="' + preview + '" loading="lazy" />';
+        el.addEventListener('click', function() { sendGif(full); });
         grid.appendChild(el);
       });
     })
-    .catch(function() { grid.innerHTML = '<div class="gif-loading">Error al buscar</div>'; });
+    .catch(function(err) { grid.innerHTML = '<div class="gif-loading">Error al buscar 😕</div>'; });
 }
 
 function sendGif(url) {
@@ -744,6 +753,24 @@ function sendGif(url) {
   document.getElementById('gifPanel').classList.remove('show');
   document.getElementById('gifSearchInput').value = '';
   document.getElementById('gifGrid').innerHTML = '<div class="gif-loading">Busca algo para ver GIFs 😄</div>';
+}
+
+function fireSystemNotif(title, body) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    var n = new Notification(title, {
+      body: body,
+      icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><rect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%232c3e50%22/><path d=%22M6 9h20v12a2 2 0 01-2 2H8a2 2 0 01-2-2V9z%22 stroke=%22white%22 stroke-width=%221.8%22 fill=%22none%22/><path d=%22M6 9l10 8 10-8%22 stroke=%22white%22 stroke-width=%221.8%22/></svg>',
+      badge: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23c0392b%22/></svg>',
+      requireInteraction: true,
+      tag: 'ping-oficina'
+    });
+    n.onclick = function() { window.focus(); n.close(); };
+  } else if (Notification.permission === 'default') {
+    Notification.requestPermission().then(function(perm) {
+      if (perm === 'granted') fireSystemNotif(title, body);
+    });
+  }
 }
 
 function playBeep(loud) {
