@@ -152,6 +152,32 @@ input[type="text"]:focus { border-color:var(--accent2); }
 .msg-row.me .msg-row-actions { justify-content:flex-end; }
 .msg-row:hover .msg-row-actions, .msg-row:active .msg-row-actions { opacity:1; }
 .action-btn { background:var(--surface2); border:1px solid var(--border2); border-radius:20px; padding:2px 8px; font-size:11px; color:var(--muted); cursor:pointer; -webkit-appearance:none; }
+
+/* PINNED */
+.pinned-bar { display:none; padding:8px 14px; background:var(--surface2); border-bottom:1px solid var(--border); flex-shrink:0; align-items:center; gap:8px; cursor:pointer; }
+.pinned-bar.show { display:flex; }
+.pin-icon { font-size:13px; flex-shrink:0; }
+.pinned-text { flex:1; font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pinned-label { font-size:10px; font-weight:700; color:var(--accent2); text-transform:uppercase; letter-spacing:0.5px; }
+
+/* TYPING */
+.typing-bar { display:none; padding:4px 16px 6px; font-size:12px; color:var(--muted); font-style:italic; flex-shrink:0; background:var(--bg); }
+.typing-bar.show { display:block; }
+.typing-dots { display:inline-flex; gap:3px; margin-left:4px; vertical-align:middle; }
+.typing-dots span { width:5px; height:5px; border-radius:50%; background:var(--muted); display:inline-block; animation:tdot 1.2s infinite; }
+.typing-dots span:nth-child(2) { animation-delay:0.2s; }
+.typing-dots span:nth-child(3) { animation-delay:0.4s; }
+@keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-4px);opacity:1} }
+
+/* GIF PANEL */
+.gif-panel { display:none; flex-direction:column; border-top:1px solid var(--border); background:var(--surface2); flex-shrink:0; max-height:220px; }
+.gif-panel.show { display:flex; }
+.gif-search-bar { padding:8px 10px; display:flex; gap:6px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.gif-search-input { flex:1; padding:6px 10px; border:1.5px solid var(--border2); border-radius:20px; font-size:13px; font-family:var(--font-ui); background:var(--bg); color:var(--text); outline:none; -webkit-appearance:none; }
+.gif-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:6px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.gif-item { border-radius:6px; overflow:hidden; cursor:pointer; aspect-ratio:1; }
+.gif-item img { width:100%; height:100%; object-fit:cover; display:block; }
+.gif-loading { padding:20px; text-align:center; font-size:12px; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -209,6 +235,10 @@ input[type="text"]:focus { border-color:var(--accent2); }
       <div class="theme-options" id="themeOptions"></div>
     </div>
 
+    <div class="pinned-bar" id="pinnedBar" onclick="scrollToPinned()">
+      <span class="pin-icon">📌</span>
+      <div style="flex:1;min-width:0;"><div class="pinned-label">Fijado</div><div class="pinned-text" id="pinnedText"></div></div>
+    </div>
     <div class="presence-bar">
       <div class="presence-label">Online:</div>
       <div class="presence-chips" id="presenceChips"><span style="font-size:12px;color:var(--muted2)">Esperando...</span></div>
@@ -216,12 +246,23 @@ input[type="text"]:focus { border-color:var(--accent2); }
     <div class="ping-bar">
       <button class="btn-ping" id="pingBtn"><div class="ping-dot"></div> Enviar PING a todos</button>
     </div>
+    <div class="typing-bar" id="typingBar">
+      <span id="typingName"></span>
+      <span class="typing-dots"><span></span><span></span><span></span></span>
+    </div>
     <div class="messages" id="messagesContainer">
       <div class="empty-state" id="emptyState">Sin mensajes aún — ¡manda un Ping!</div>
     </div>
     <div class="reply-preview" id="replyPreview">
       <div class="reply-preview-text"><strong id="replyPreviewSender"></strong><span id="replyPreviewText"></span></div>
       <button class="reply-cancel" onclick="cancelReply()">✕</button>
+    </div>
+    <div class="gif-panel" id="gifPanel">
+      <div class="gif-search-bar">
+        <input class="gif-search-input" id="gifSearchInput" type="text" placeholder="Buscar GIFs..." autocomplete="off" />
+        <button class="tool-btn" onclick="searchGifs()" style="flex-shrink:0;">🔍</button>
+      </div>
+      <div class="gif-grid" id="gifGrid"><div class="gif-loading">Busca algo para ver GIFs 😄</div></div>
     </div>
     <div class="sticker-panel" id="stickerPanel">
       <div class="sticker-panel-title">Stickers</div>
@@ -232,6 +273,7 @@ input[type="text"]:focus { border-color:var(--accent2); }
         <div class="input-tools">
           <button class="tool-btn" id="stickerBtn">😄</button>
           <button class="tool-btn" id="imgBtn">🖼️</button>
+          <button class="tool-btn" id="gifBtn">GIF</button>
           <div class="upload-progress" id="uploadProgress">Subiendo...</div>
         </div>
         <input class="msg-input" id="msgInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off" />
@@ -261,8 +303,12 @@ var THEMES = [
   { id:'hielo', name:'Hielo', colors:['#caf0f8','#03045e','#0077b6'] }
 ];
 
+var GIPHY_KEY = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L59';
 var myName = '';
 var replyTo = null;
+var typingTimer = null;
+var typingTimeout = null;
+var pinnedKey = null;
 var startTs = 0;
 var unread = 0;
 var blinkInterval = null;
@@ -338,6 +384,14 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
   if (file) uploadAndSendImage(file);
   e.target.value = '';
 });
+document.getElementById('gifBtn').addEventListener('click', function() {
+  var gp = document.getElementById('gifPanel');
+  var sp = document.getElementById('stickerPanel');
+  sp.classList.remove('show');
+  gp.classList.toggle('show');
+  if (gp.classList.contains('show')) document.getElementById('gifSearchInput').focus();
+});
+document.getElementById('gifSearchInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') searchGifs(); });
 document.getElementById('themeToggleBtn').addEventListener('click', function() {
   document.getElementById('themePanel').classList.toggle('show');
 });
@@ -359,6 +413,9 @@ document.addEventListener('paste', function(e) {
 document.addEventListener('click', function(e) {
   if (!e.target.closest('.bubble-wrap')) {
     document.querySelectorAll('.reaction-picker.show').forEach(function(p) { p.classList.remove('show'); });
+  }
+  if (!e.target.closest('.gif-panel') && !e.target.closest('#gifBtn')) {
+    document.getElementById('gifPanel').classList.remove('show');
   }
   if (!e.target.closest('.theme-panel') && !e.target.closest('#themeToggleBtn')) {
     document.getElementById('themePanel').classList.remove('show');
@@ -386,6 +443,41 @@ function startApp() {
   function heartbeat() { myPresRef.set({ ts: Date.now(), name: myName }); }
   heartbeat();
   setInterval(heartbeat, 5000);
+
+  // Typing indicator
+  var myTypingRef = db.ref('typing/' + myName);
+  document.getElementById('msgInput').addEventListener('input', function() {
+    myTypingRef.set({ name: myName, ts: Date.now() });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(function() { myTypingRef.remove(); }, 3000);
+  });
+
+  db.ref('typing').on('value', function(snap) {
+    var all = snap.val() || {};
+    var now = Date.now();
+    var typers = Object.values(all).filter(function(u) { return u.name !== myName && u.ts && (now - u.ts) < 4000; });
+    var bar = document.getElementById('typingBar');
+    if (typers.length > 0) {
+      document.getElementById('typingName').textContent = typers.map(function(u){return u.name;}).join(', ') + ' está escribiendo';
+      bar.classList.add('show');
+    } else {
+      bar.classList.remove('show');
+    }
+  });
+
+  // Pinned message
+  db.ref('pinned').on('value', function(snap) {
+    var data = snap.val();
+    var bar = document.getElementById('pinnedBar');
+    if (data && data.text) {
+      pinnedKey = data.key;
+      document.getElementById('pinnedText').textContent = data.sender + ': ' + data.text;
+      bar.classList.add('show');
+    } else {
+      bar.classList.remove('show');
+      pinnedKey = null;
+    }
+  });
 
   db.ref('presence').on('value', function(snap) {
     var all = snap.val() || {};
@@ -461,6 +553,7 @@ function renderMessage(key, data, isMe) {
   }
   var actionsHtml = '<div class="msg-row-actions">' +
     '<button class="action-btn" onclick="startReply(\'' + key + '\',event)">↩ Responder</button>' +
+    (data.type === 'text' ? '<button class="action-btn" onclick="pinMessage(\'' + key + '\',event)">📌 Fijar</button>' : '') +
   '</div>';
   row.innerHTML =
     '<div class="msg-avatar">' + esc(data.sender[0].toUpperCase()) + '</div>' +
@@ -602,6 +695,55 @@ function notifyMsg(sender) {
     badge.classList.add('show');
     startBlink(sender);
   }
+}
+
+function pinMessage(key, e) {
+  e.stopPropagation();
+  var msgEl = document.getElementById('msg-' + key);
+  if (!msgEl) return;
+  var bubbleEl = msgEl.querySelector('.bubble');
+  var text = bubbleEl ? bubbleEl.childNodes[0] && bubbleEl.childNodes[0].nodeType === 3 ? bubbleEl.childNodes[0].textContent.trim() : bubbleEl.textContent.replace(/[0-9]{1,2}:[0-9]{2}/,'').trim() : '';
+  var sender = msgEl.dataset.sender || '';
+  if (pinnedKey === key) {
+    db.ref('pinned').remove();
+  } else {
+    db.ref('pinned').set({ key: key, text: text.substring(0,80), sender: sender, ts: Date.now() });
+  }
+}
+
+function scrollToPinned() {
+  if (pinnedKey) scrollToMsg(pinnedKey);
+}
+
+function searchGifs() {
+  var q = document.getElementById('gifSearchInput').value.trim();
+  if (!q) return;
+  var grid = document.getElementById('gifGrid');
+  grid.innerHTML = '<div class="gif-loading">Buscando...</div>';
+  fetch('https://api.giphy.com/v1/gifs/search?api_key=' + GIPHY_KEY + '&q=' + encodeURIComponent(q) + '&limit=12&rating=g')
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      grid.innerHTML = '';
+      if (!json.data || json.data.length === 0) { grid.innerHTML = '<div class="gif-loading">Sin resultados</div>'; return; }
+      json.data.forEach(function(gif) {
+        var url = gif.images.fixed_width_small.url;
+        var original = gif.images.fixed_width.url;
+        var el = document.createElement('div');
+        el.className = 'gif-item';
+        el.innerHTML = '<img src="' + url + '" loading="lazy" />';
+        el.addEventListener('click', function() { sendGif(original); });
+        grid.appendChild(el);
+      });
+    })
+    .catch(function() { grid.innerHTML = '<div class="gif-loading">Error al buscar</div>'; });
+}
+
+function sendGif(url) {
+  if (!myName) return;
+  pushMsg({ sender: myName, text: '', url: url, timeStr: getTime(), ts: Date.now(), type: 'image', isPing: false });
+  document.getElementById('gifPanel').classList.remove('show');
+  document.getElementById('gifSearchInput').value = '';
+  document.getElementById('gifGrid').innerHTML = '<div class="gif-loading">Busca algo para ver GIFs 😄</div>';
 }
 
 function playBeep(loud) {
