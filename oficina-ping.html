@@ -259,10 +259,10 @@ input[type="text"]:focus { border-color:var(--accent2); }
     </div>
     <div class="gif-panel" id="gifPanel">
       <div class="gif-search-bar">
-        <input class="gif-search-input" id="gifSearchInput" type="text" placeholder="Buscar GIFs..." autocomplete="off" />
+        <input class="gif-search-input" id="gifSearchInput" type="text" placeholder="Buscar GIFs... (en inglés)" autocomplete="off" />
         <button class="tool-btn" onclick="searchGifs()" style="flex-shrink:0;">🔍</button>
       </div>
-      <div class="gif-grid" id="gifGrid"><div class="gif-loading">Busca algo para ver GIFs 😄</div></div>
+      <div class="gif-grid" id="gifGrid"><div class="gif-loading">Busca en inglés: "laugh", "thanks", "yes" 😄</div></div>
     </div>
     <div class="sticker-panel" id="stickerPanel">
       <div class="sticker-panel-title">Stickers</div>
@@ -728,23 +728,42 @@ function searchGifs() {
   if (!q) return;
   var grid = document.getElementById('gifGrid');
   grid.innerHTML = '<div class="gif-loading">Buscando...</div>';
-  var url = 'https://tenor.googleapis.com/v2/search?q=' + encodeURIComponent(q) + '&key=AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCY0&limit=12&media_filter=gif';
-  fetch(url)
-    .then(function(r) { return r.json(); })
-    .then(function(json) {
-      grid.innerHTML = '';
-      if (!json.results || json.results.length === 0) { grid.innerHTML = '<div class="gif-loading">Sin resultados 😅</div>'; return; }
-      json.results.forEach(function(gif) {
-        var preview = gif.media_formats.tinygif ? gif.media_formats.tinygif.url : gif.media_formats.gif.url;
-        var full = gif.media_formats.gif.url;
-        var el = document.createElement('div');
-        el.className = 'gif-item';
-        el.innerHTML = '<img src="' + preview + '" loading="lazy" />';
-        el.addEventListener('click', function() { sendGif(full); });
-        grid.appendChild(el);
-      });
-    })
-    .catch(function(err) { grid.innerHTML = '<div class="gif-loading">Error al buscar 😕</div>'; });
+
+  // Remove previous script tag if exists
+  var old = document.getElementById('giphy-script');
+  if (old) old.remove();
+
+  window._giphyCb = function(json) {
+    grid.innerHTML = '';
+    if (!json.data || json.data.length === 0) {
+      grid.innerHTML = '<div class="gif-loading">Sin resultados 😅 Intenta en inglés</div>';
+      return;
+    }
+    json.data.forEach(function(gif) {
+      var preview = gif.images.fixed_width_downsampled
+        ? gif.images.fixed_width_downsampled.url
+        : gif.images.fixed_width_small.url;
+      var full = gif.images.fixed_width.url;
+      var el = document.createElement('div');
+      el.className = 'gif-item';
+      var img = document.createElement('img');
+      img.src = preview;
+      img.loading = 'lazy';
+      el.appendChild(img);
+      el.addEventListener('click', function() { sendGif(full); });
+      grid.appendChild(el);
+    });
+  };
+
+  var script = document.createElement('script');
+  script.id = 'giphy-script';
+  script.src = 'https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q='
+    + encodeURIComponent(q)
+    + '&limit=12&rating=g&callback=_giphyCb';
+  script.onerror = function() {
+    grid.innerHTML = '<div class="gif-loading">Error de conexión 😕</div>';
+  };
+  document.body.appendChild(script);
 }
 
 function sendGif(url) {
