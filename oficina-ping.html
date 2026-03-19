@@ -729,40 +729,38 @@ function searchGifs() {
   var grid = document.getElementById('gifGrid');
   grid.innerHTML = '<div class="gif-loading">Buscando...</div>';
 
-  var old = document.getElementById('giphy-script');
-  if (old) old.remove();
-
-  window._giphyCb = function(json) {
-    grid.innerHTML = '';
-    if (!json.data || json.data.length === 0) {
-      grid.innerHTML = '<div class="gif-loading">Sin resultados 😅</div>';
-      return;
-    }
-    json.data.forEach(function(gif) {
-      var preview = gif.images.fixed_width_downsampled
-        ? gif.images.fixed_width_downsampled.url
-        : gif.images.fixed_width_small.url;
-      var full = gif.images.fixed_width.url;
-      var el = document.createElement('div');
-      el.className = 'gif-item';
-      var img = document.createElement('img');
-      img.src = preview;
-      img.loading = 'lazy';
-      el.appendChild(img);
-      el.addEventListener('click', function() { sendGif(full); });
-      grid.appendChild(el);
+  // Usar Giphy con fetch y modo no-cors como imagen directa via proxy público
+  // Alternativa: construir URLs de Tenor embed sin API
+  // Tenor permite buscar via su web embed que tiene CORS abierto
+  var url = 'https://g.tenor.com/v1/search?q=' + encodeURIComponent(q) + '&key=LIVDSRZULELA&limit=12&contentfilter=medium&media_filter=minimal';
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      grid.innerHTML = '';
+      if (!json.results || json.results.length === 0) {
+        grid.innerHTML = '<div class="gif-loading">Sin resultados 😅</div>';
+        return;
+      }
+      json.results.forEach(function(gif) {
+        var preview = gif.media[0].tinygif ? gif.media[0].tinygif.url : gif.media[0].gif.url;
+        var full = gif.media[0].gif.url;
+        var el = document.createElement('div');
+        el.className = 'gif-item';
+        var img = document.createElement('img');
+        img.src = preview;
+        img.loading = 'lazy';
+        el.appendChild(img);
+        el.addEventListener('click', function() { sendGif(full); });
+        grid.appendChild(el);
+      });
+    })
+    .catch(function(err) {
+      // Si Tenor falla, mostrar links directos a Giphy para copiar
+      grid.innerHTML = '<div class="gif-loading" style="padding:12px;text-align:center;">' +
+        '<div style="margin-bottom:8px;">Busca en <a href="https://giphy.com/search/' + encodeURIComponent(q) + '" target="_blank" style="color:var(--accent2)">Giphy.com</a></div>' +
+        '<div style="font-size:11px;color:var(--muted2)">Copia la URL del GIF y pégala en el chat</div>' +
+      '</div>';
     });
-  };
-
-  var script = document.createElement('script');
-  script.id = 'giphy-script';
-  script.src = 'https://api.giphy.com/v1/gifs/search?api_key=' + GIPHY_KEY
-    + '&q=' + encodeURIComponent(q)
-    + '&limit=12&rating=g&lang=es&callback=_giphyCb';
-  script.onerror = function() {
-    grid.innerHTML = '<div class="gif-loading">Error de conexión 😕</div>';
-  };
-  document.body.appendChild(script);
 }
 
 function sendGif(url) {
