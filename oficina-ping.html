@@ -259,10 +259,10 @@ input[type="text"]:focus { border-color:var(--accent2); }
     </div>
     <div class="gif-panel" id="gifPanel">
       <div class="gif-search-bar">
-        <input class="gif-search-input" id="gifSearchInput" type="text" placeholder="Buscar GIFs... (en inglés)" autocomplete="off" />
+        <input class="gif-search-input" id="gifSearchInput" type="text" placeholder="Buscar GIFs..." autocomplete="off" />
         <button class="tool-btn" onclick="searchGifs()" style="flex-shrink:0;">🔍</button>
       </div>
-      <div class="gif-grid" id="gifGrid"><div class="gif-loading">Busca en inglés: "laugh", "thanks", "yes" 😄</div></div>
+      <div class="gif-grid" id="gifGrid"><div class="gif-loading">Escribe algo para buscar GIFs 😄</div></div>
     </div>
     <div class="sticker-panel" id="stickerPanel">
       <div class="sticker-panel-title">Stickers</div>
@@ -303,7 +303,7 @@ var THEMES = [
   { id:'hielo', name:'Hielo', colors:['#caf0f8','#03045e','#0077b6'] }
 ];
 
-var TENOR_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCY0';
+var GIPHY_KEY = 'FxebxAp3BJvOScbXlWhixuqqQIQWIW1W';
 var myName = '';
 var replyTo = null;
 var typingTimer = null;
@@ -729,14 +729,13 @@ function searchGifs() {
   var grid = document.getElementById('gifGrid');
   grid.innerHTML = '<div class="gif-loading">Buscando...</div>';
 
-  // Remove previous script tag if exists
   var old = document.getElementById('giphy-script');
   if (old) old.remove();
 
   window._giphyCb = function(json) {
     grid.innerHTML = '';
     if (!json.data || json.data.length === 0) {
-      grid.innerHTML = '<div class="gif-loading">Sin resultados 😅 Intenta en inglés</div>';
+      grid.innerHTML = '<div class="gif-loading">Sin resultados 😅</div>';
       return;
     }
     json.data.forEach(function(gif) {
@@ -757,9 +756,9 @@ function searchGifs() {
 
   var script = document.createElement('script');
   script.id = 'giphy-script';
-  script.src = 'https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q='
-    + encodeURIComponent(q)
-    + '&limit=12&rating=g&callback=_giphyCb';
+  script.src = 'https://api.giphy.com/v1/gifs/search?api_key=' + GIPHY_KEY
+    + '&q=' + encodeURIComponent(q)
+    + '&limit=12&rating=g&lang=es&callback=_giphyCb';
   script.onerror = function() {
     grid.innerHTML = '<div class="gif-loading">Error de conexión 😕</div>';
   };
