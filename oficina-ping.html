@@ -544,7 +544,7 @@ function renderMessage(key, data, isMe) {
     bubbleContent = '<span style="font-size:48px;line-height:1;">' + esc(data.text) + '</span>';
     bubbleClass = 'bubble sticker';
   } else {
-    bubbleContent = esc(data.text);
+    bubbleContent = formatText(data.text);
   }
   var pickerHtml = '<div class="reaction-picker" id="picker-' + key + '">' +
     REACTIONS.map(function(r) { return '<span class="r-opt" onclick="addReaction(\'' + key + '\',\'' + r + '\',event)">' + r + '</span>'; }).join('') + '</div>';
@@ -657,6 +657,62 @@ function sendSticker(emoji) {
   if (!myName) return;
   pushMsg({ sender: myName, text: emoji, timeStr: getTime(), ts: Date.now(), type: 'sticker', isPing: false });
 }
+function formatText(text) {
+  // Detect Giphy image URLs (media0-4.giphy.com or giphy.com/media)
+  var giphyImgRe = /https?:\/\/(media[0-9]*\.giphy\.com\/media\/[^\s]+\.gif|i\.giphy\.com\/[^\s]+\.gif)/gi;
+  // Detect Giphy page URLs (giphy.com/gifs/...)
+  var giphyPageRe = /https?:\/\/(www\.)?giphy\.com\/gifs\/([^\s]+)/gi;
+  // Detect general URLs
+  var urlRe = /https?:\/\/[^\s]+/gi;
+
+  // First extract all Giphy media URLs to render as images
+  var result = text;
+
+  // Replace giphy direct image URLs with img tags
+  result = result.replace(giphyImgRe, function(url) {
+    return 'IMG' + url + 'END';
+  });
+
+  // For giphy page URLs, extract the ID and build media URL
+  result = result.replace(giphyPageRe, function(url, www, slug) {
+    // slug is like "funny-cat-abc123" - last part after last dash is usually the ID
+    var parts = slug.replace(/\/$/, '').split('-');
+    var id = parts[parts.length - 1];
+    if (id && id.length > 5) {
+      return 'IMGhttps://media.giphy.com/media/' + id + '/giphy.gifEND';
+    }
+    return 'LINK' + url + 'END';
+  });
+
+  // Replace remaining URLs with clickable links
+  result = result.replace(urlRe, function(url) {
+    if (url.indexOf('') === -1) {
+      return 'LINK' + url + 'END';
+    }
+    return url;
+  });
+
+  // Now escape HTML on non-token parts and build final HTML
+  var parts = result.split('');
+  var html = '';
+  var i = 0;
+  while (i < parts.length) {
+    if (parts[i] === 'IMG' && parts[i+2] === 'END') {
+      var imgUrl = parts[i+1];
+      html += '<img src="' + imgUrl + '" style="max-width:200px;max-height:200px;border-radius:10px;display:block;cursor:pointer;margin-top:4px;" onclick="openLightbox(\'' + imgUrl + '\')" />';
+      i += 3;
+    } else if (parts[i] === 'LINK' && parts[i+2] === 'END') {
+      var linkUrl = parts[i+1];
+      html += '<a href="' + linkUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;opacity:0.85;word-break:break-all;">' + esc(linkUrl) + '</a>';
+      i += 3;
+    } else {
+      html += esc(parts[i]);
+      i++;
+    }
+  }
+  return html;
+}
+
 function pushMsg(data) {
   var newRef = db.ref('msgs').push();
   newRef.set(data);
