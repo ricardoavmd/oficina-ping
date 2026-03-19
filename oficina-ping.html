@@ -138,6 +138,20 @@ input[type="text"]:focus { border-color:var(--accent2); }
 .lightbox.show { display:flex; }
 .lightbox img { max-width:92vw; max-height:88vh; border-radius:12px; }
 .empty-state { flex:1; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:13px; text-align:center; }
+.reply-preview { display:none; padding:8px 12px; background:var(--surface2); border-top:1px solid var(--border); border-left:3px solid var(--accent2); margin:0 12px 4px; border-radius:0 8px 8px 0; flex-shrink:0; align-items:center; gap:8px; }
+.reply-preview.show { display:flex; }
+.reply-preview-text { flex:1; font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.reply-preview-text strong { color:var(--text); display:block; font-size:11px; margin-bottom:2px; }
+.reply-cancel { background:none; border:none; color:var(--muted); cursor:pointer; font-size:20px; line-height:1; padding:0; flex-shrink:0; }
+.reply-quote { border-left:3px solid var(--accent2); padding:5px 8px; margin-bottom:6px; border-radius:0 6px 6px 0; background:rgba(0,0,0,0.08); cursor:pointer; }
+.msg-row.me .reply-quote { background:rgba(255,255,255,0.12); }
+.reply-quote-sender { font-size:10px; font-weight:700; color:var(--accent2); margin-bottom:2px; }
+.msg-row.me .reply-quote-sender { color:rgba(255,255,255,0.7); }
+.reply-quote-text { font-size:11px; opacity:0.75; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+.msg-row-actions { display:flex; gap:4px; opacity:0; transition:opacity 0.15s; margin-bottom:2px; justify-content:flex-start; }
+.msg-row.me .msg-row-actions { justify-content:flex-end; }
+.msg-row:hover .msg-row-actions, .msg-row:active .msg-row-actions { opacity:1; }
+.action-btn { background:var(--surface2); border:1px solid var(--border2); border-radius:20px; padding:2px 8px; font-size:11px; color:var(--muted); cursor:pointer; -webkit-appearance:none; }
 </style>
 </head>
 <body>
@@ -205,6 +219,10 @@ input[type="text"]:focus { border-color:var(--accent2); }
     <div class="messages" id="messagesContainer">
       <div class="empty-state" id="emptyState">Sin mensajes aún — ¡manda un Ping!</div>
     </div>
+    <div class="reply-preview" id="replyPreview">
+      <div class="reply-preview-text"><strong id="replyPreviewSender"></strong><span id="replyPreviewText"></span></div>
+      <button class="reply-cancel" onclick="cancelReply()">✕</button>
+    </div>
     <div class="sticker-panel" id="stickerPanel">
       <div class="sticker-panel-title">Stickers</div>
       <div class="sticker-grid" id="stickerGrid"></div>
@@ -244,6 +262,7 @@ var THEMES = [
 ];
 
 var myName = '';
+var replyTo = null;
 var startTs = 0;
 var unread = 0;
 var blinkInterval = null;
@@ -419,6 +438,7 @@ function renderMessage(key, data, isMe) {
   var row = document.createElement('div');
   row.className = 'msg-row ' + (isMe ? 'me' : 'them');
   row.id = 'msg-' + key;
+  row.dataset.sender = data.sender;
   var bubbleContent = '';
   var bubbleClass = 'bubble';
   if (data.type === 'image') {
@@ -431,11 +451,23 @@ function renderMessage(key, data, isMe) {
   }
   var pickerHtml = '<div class="reaction-picker" id="picker-' + key + '">' +
     REACTIONS.map(function(r) { return '<span class="r-opt" onclick="addReaction(\'' + key + '\',\'' + r + '\',event)">' + r + '</span>'; }).join('') + '</div>';
+  var replyQuoteHtml = '';
+  if (data.replyTo) {
+    var qt = data.replyTo.type === 'image' ? '📷 Imagen' : esc(data.replyTo.text || '');
+    replyQuoteHtml = '<div class="reply-quote" onclick="scrollToMsg(\'' + data.replyTo.key + '\')">' +
+      '<div class="reply-quote-sender">' + esc(data.replyTo.sender) + '</div>' +
+      '<div class="reply-quote-text">' + qt + '</div>' +
+    '</div>';
+  }
+  var actionsHtml = '<div class="msg-row-actions">' +
+    '<button class="action-btn" onclick="startReply(\'' + key + '\',event)">↩ Responder</button>' +
+  '</div>';
   row.innerHTML =
     '<div class="msg-avatar">' + esc(data.sender[0].toUpperCase()) + '</div>' +
     '<div class="bubble-wrap">' +
+      actionsHtml +
       '<div class="' + bubbleClass + '" style="position:relative;" onclick="toggleReactionPicker(\'' + key + '\',event)">' +
-        bubbleContent + '<span class="time">' + esc(data.timeStr) + '</span>' + pickerHtml +
+        replyQuoteHtml + bubbleContent + '<span class="time">' + esc(data.timeStr) + '</span>' + pickerHtml +
       '</div>' +
       '<div class="reactions-row" id="reactions-' + key + '"></div>' +
     '</div>';
@@ -486,8 +518,38 @@ function sendMessage() {
   var input = document.getElementById('msgInput');
   var text = input.value.trim();
   if (!text || !myName) return;
-  pushMsg({ sender: myName, text: text, timeStr: getTime(), ts: Date.now(), type: 'text', isPing: false });
+  var msg = { sender: myName, text: text, timeStr: getTime(), ts: Date.now(), type: 'text', isPing: false };
+  if (replyTo) { msg.replyTo = replyTo; cancelReply(); }
+  pushMsg(msg);
   input.value = '';
+}
+function startReply(key, e) {
+  e.stopPropagation();
+  var msgEl = document.getElementById('msg-' + key);
+  if (!msgEl) return;
+  var bubbleEl = msgEl.querySelector('.bubble');
+  var senderEl = msgEl.querySelector('.msg-avatar');
+  var sender = senderEl ? senderEl.textContent : '?';
+  // Get full sender name from data
+  var allRows = document.querySelectorAll('.msg-row');
+  var senderName = '';
+  allRows.forEach(function(r) { if (r.id === 'msg-' + key) { senderName = r.classList.contains('me') ? myName : (r.querySelector('.msg-avatar') ? r.querySelector('.msg-avatar').textContent : ''); } });
+  var isImage = bubbleEl && bubbleEl.querySelector('img');
+  var previewText = isImage ? '📷 Imagen' : (bubbleEl ? (bubbleEl.childNodes[0] && bubbleEl.childNodes[0].nodeType === 3 ? bubbleEl.childNodes[0].textContent.trim() : bubbleEl.textContent.replace(/[0-9]{1,2}:[0-9]{2}/,'').trim()) : '');
+  // Store full sender name from row data attribute if available
+  replyTo = { key: key, sender: msgEl.dataset.sender || senderName || sender, text: previewText.substring(0,60), type: isImage ? 'image' : 'text' };
+  document.getElementById('replyPreviewSender').textContent = replyTo.sender;
+  document.getElementById('replyPreviewText').textContent = replyTo.text;
+  document.getElementById('replyPreview').classList.add('show');
+  document.getElementById('msgInput').focus();
+}
+function cancelReply() {
+  replyTo = null;
+  document.getElementById('replyPreview').classList.remove('show');
+}
+function scrollToMsg(key) {
+  var el = document.getElementById('msg-' + key);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.style.transition='background 0.3s'; el.style.background='rgba(128,128,128,0.15)'; setTimeout(function(){ el.style.background=''; },1200); }
 }
 function sendPing() {
   if (!myName) return;
