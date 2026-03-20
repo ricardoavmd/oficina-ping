@@ -159,6 +159,27 @@ input[type="text"]:focus { border-color:var(--accent2); }
 .msg-row:hover .msg-row-actions, .msg-row:active .msg-row-actions { opacity:1; }
 .action-btn { background:var(--surface2); border:1px solid var(--border2); border-radius:20px; padding:2px 8px; font-size:11px; color:var(--muted); cursor:pointer; -webkit-appearance:none; }
 
+/* AUDIO / VOZ */
+.voice-btn { width:38px; height:38px; background:var(--surface2); border:1.5px solid var(--border2); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; -webkit-appearance:none; transition:background 0.15s,transform 0.1s; }
+.voice-btn.recording { background:var(--accent); border-color:var(--accent); animation:recpulse 1s infinite; }
+.voice-btn.recording svg path { stroke:#fff; }
+@keyframes recpulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+.rec-indicator { display:none; align-items:center; gap:6px; padding:4px 10px; background:var(--accent); border-radius:20px; flex-shrink:0; }
+.rec-indicator.show { display:flex; }
+.rec-dot { width:8px; height:8px; border-radius:50%; background:#fff; animation:recpulse 0.8s infinite; }
+.rec-time { font-size:12px; color:#fff; font-weight:600; min-width:32px; }
+.audio-bubble { display:flex; align-items:center; gap:8px; min-width:160px; max-width:220px; }
+.audio-play-btn { width:34px; height:34px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; -webkit-appearance:none; }
+.msg-row.me .audio-play-btn { background:rgba(255,255,255,0.25); }
+.msg-row.them .audio-play-btn { background:var(--accent2); }
+.audio-play-btn svg { width:14px; height:14px; }
+.msg-row.me .audio-play-btn svg path { stroke:#fff; }
+.msg-row.them .audio-play-btn svg path { stroke:#fff; }
+.audio-waveform { flex:1; display:flex; align-items:center; gap:2px; height:28px; }
+.audio-waveform span { display:inline-block; width:3px; border-radius:2px; background:currentColor; opacity:0.5; transition:opacity 0.2s; }
+.audio-waveform span.active { opacity:1; }
+.audio-duration { font-size:11px; opacity:0.6; min-width:28px; text-align:right; }
+
 /* PINNED */
 .pinned-bar { display:none; padding:8px 14px; background:var(--surface2); border-bottom:1px solid var(--border); flex-shrink:0; align-items:center; gap:8px; cursor:pointer; }
 .pinned-bar.show { display:flex; }
@@ -280,10 +301,17 @@ input[type="text"]:focus { border-color:var(--accent2); }
           <button class="tool-btn" id="stickerBtn">😄</button>
           <button class="tool-btn" id="imgBtn">🖼️</button>
           <button class="tool-btn" id="gifBtn">GIF</button>
+          <div class="rec-indicator" id="recIndicator">
+            <div class="rec-dot"></div>
+            <span class="rec-time" id="recTime">0:00</span>
+          </div>
           <div class="upload-progress" id="uploadProgress">Subiendo...</div>
         </div>
         <input class="msg-input" id="msgInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off" />
       </div>
+      <button class="voice-btn" id="voiceBtn" title="Mantén para grabar">
+        <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" stroke-width="2"/><path d="M5 10a7 7 0 0014 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
       <button class="btn-send" id="sendBtn">
         <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -310,6 +338,10 @@ var THEMES = [
 ];
 
 var GIPHY_KEY = 'FxebxAp3BJvOScbXlWhixuqqQIQWIW1W';
+var mediaRecorder = null;
+var audioChunks = [];
+var recTimerInterval = null;
+var recSeconds = 0;
 var myName = '';
 var replyTo = null;
 var typingTimer = null;
@@ -398,6 +430,14 @@ document.getElementById('gifBtn').addEventListener('click', function() {
   if (gp.classList.contains('show')) document.getElementById('gifSearchInput').focus();
 });
 document.getElementById('gifSearchInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') searchGifs(); });
+
+// Voice recording — press and hold
+var voiceBtn = document.getElementById('voiceBtn');
+voiceBtn.addEventListener('mousedown', startRecording);
+voiceBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startRecording(); }, { passive: false });
+voiceBtn.addEventListener('mouseup', stopRecording);
+voiceBtn.addEventListener('mouseleave', stopRecording);
+voiceBtn.addEventListener('touchend', function(e) { e.preventDefault(); stopRecording(); }, { passive: false });
 document.getElementById('themeToggleBtn').addEventListener('click', function() {
   document.getElementById('themePanel').classList.toggle('show');
 });
@@ -546,6 +586,22 @@ function renderMessage(key, data, isMe) {
   var bubbleClass = 'bubble';
   if (data.type === 'image') {
     bubbleContent = '<img src="' + data.url + '" alt="imagen" onclick="openLightbox(\'' + data.url + '\')" />';
+  } else if (data.type === 'audio') {
+    var dur = data.duration ? formatDuration(data.duration) : '0:00';
+    var bars = '';
+    var barCount = 20;
+    var heights = data.waveform || [];
+    for (var b = 0; b < barCount; b++) {
+      var h = heights[b] ? Math.max(4, Math.round(heights[b] * 26)) : Math.round(4 + Math.random() * 22);
+      bars += '<span style="height:' + h + 'px" data-idx="' + b + '"></span>';
+    }
+    bubbleContent = '<div class="audio-bubble">' +
+      '<button class="audio-play-btn" onclick="playAudio(\'' + data.url + '\',this)">' +
+        '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>' +
+      '</button>' +
+      '<div class="audio-waveform" id="wave-' + key + '">' + bars + '</div>' +
+      '<span class="audio-duration" id="dur-' + key + '">' + dur + '</span>' +
+    '</div>';
   } else if (data.type === 'sticker') {
     bubbleContent = '<span style="font-size:48px;line-height:1;">' + esc(data.text) + '</span>';
     bubbleClass = 'bubble sticker';
@@ -717,6 +773,102 @@ function formatText(text) {
     }
   }
   return html;
+}
+
+function startRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') return;
+  if (!myName) return;
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(function(stream) {
+      audioChunks = [];
+      recSeconds = 0;
+      var options = MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : {};
+      mediaRecorder = new MediaRecorder(stream, options);
+      mediaRecorder.ondataavailable = function(e) { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = function() {
+        stream.getTracks().forEach(function(t) { t.stop(); });
+        var blob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+        uploadAndSendAudio(blob, recSeconds);
+      };
+      mediaRecorder.start();
+      document.getElementById('voiceBtn').classList.add('recording');
+      document.getElementById('recIndicator').classList.add('show');
+      recTimerInterval = setInterval(function() {
+        recSeconds++;
+        var m = Math.floor(recSeconds / 60);
+        var s = recSeconds % 60;
+        document.getElementById('recTime').textContent = m + ':' + (s < 10 ? '0' : '') + s;
+      }, 1000);
+    })
+    .catch(function() { alert('No se pudo acceder al micrófono.'); });
+}
+
+function stopRecording() {
+  if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+  clearInterval(recTimerInterval);
+  document.getElementById('voiceBtn').classList.remove('recording');
+  document.getElementById('recIndicator').classList.remove('show');
+  document.getElementById('recTime').textContent = '0:00';
+  if (recSeconds < 1) {
+    mediaRecorder.stream && mediaRecorder.stream.getTracks().forEach(function(t) { t.stop(); });
+    return;
+  }
+  mediaRecorder.stop();
+}
+
+function uploadAndSendAudio(blob, duration) {
+  var progress = document.getElementById('uploadProgress');
+  progress.textContent = 'Enviando audio...';
+  progress.classList.add('show');
+
+  // Convert blob to base64 and store directly in Firebase (for short audios < 1MB)
+  var reader = new FileReader();
+  reader.onloadend = function() {
+    var base64 = reader.result; // data:audio/webm;base64,...
+    var wv = [];
+    for (var i = 0; i < 20; i++) wv.push(Math.random());
+    pushMsg({ sender: myName, text: '', url: base64, duration: duration, waveform: wv, timeStr: getTime(), ts: Date.now(), type: 'audio', isPing: false });
+    progress.classList.remove('show');
+  };
+  reader.onerror = function() {
+    alert('Error al procesar el audio.');
+    progress.classList.remove('show');
+  };
+  reader.readAsDataURL(blob);
+}
+
+function playAudio(url, btn) {
+  // Stop any currently playing
+  document.querySelectorAll('.audio-playing').forEach(function(a) { a.pause(); a.currentTime = 0; });
+  document.querySelectorAll('.audio-play-btn').forEach(function(b) {
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>';
+  });
+  var audio = new Audio(url);
+  audio.classList && audio.classList.add('audio-playing');
+  // Find the key from the waveform sibling
+  var waveEl = btn.nextElementSibling;
+  var durEl = waveEl ? waveEl.nextElementSibling : null;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" rx="1" fill="white"/><rect x="14" y="4" width="4" height="16" rx="1" fill="white"/></svg>';
+  audio.play();
+  // Animate waveform
+  var bars = waveEl ? waveEl.querySelectorAll('span') : [];
+  var barCount = bars.length;
+  audio.addEventListener('timeupdate', function() {
+    var pct = audio.duration ? audio.currentTime / audio.duration : 0;
+    var activeIdx = Math.floor(pct * barCount);
+    bars.forEach(function(bar, idx) { bar.classList.toggle('active', idx <= activeIdx); });
+    if (durEl) durEl.textContent = formatDuration(Math.floor(audio.currentTime));
+  });
+  audio.addEventListener('ended', function() {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>';
+    bars.forEach(function(bar) { bar.classList.remove('active'); });
+  });
+}
+
+function formatDuration(secs) {
+  var m = Math.floor(secs / 60);
+  var s = secs % 60;
+  return m + ':' + (s < 10 ? '0' : '') + s;
 }
 
 function pushMsg(data) {
