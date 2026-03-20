@@ -48,7 +48,7 @@ body.t-violeta{--bg:#f8f7ff;--body-bg:#f8f7ff;--surface:rgba(255,255,255,0.95);-
 body.t-hielo{--bg:#caf0f8;--body-bg:#caf0f8;--surface:rgba(232,244,248,0.95);--surface2:#ade8f4;--surface3:#90e0ef;--border:rgba(0,0,0,0.06);--border2:rgba(0,119,182,0.25);--text:#03045e;--muted:#0096c7;--muted2:#48cae4;--accent:#0077b6;--accent-solid:#0077b6;--accent2-solid:#03045e;--grad:#0077b6,#00b4d8;--grad2:#03045e,#0077b6;--green:#27ae60;--bubble-me-grad:#03045e,#0077b6;--bubble-me-text:#fff;--bubble-them:#ade8f4;--bubble-them-text:#03045e;--header-bg:rgba(232,244,248,0.9);--input-bg:rgba(202,240,248,0.8);}
 
 body { font-family:var(--font-ui); background:var(--body-bg,linear-gradient(160deg,#fdf4ff 0%,#e8f5ff 55%,#f0fff4 100%)); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem; transition:background 0.4s; }
-.app { width:100%; max-width:500px; background:var(--surface,rgba(255,255,255,0.75)); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-radius:28px; border:1px solid var(--border2,rgba(232,121,249,0.25)); overflow:hidden; display:flex; flex-direction:column; height:95vh; max-height:780px; box-shadow:0 8px 48px rgba(168,85,247,0.14); transition:background 0.4s; }
+.app { width:100%; max-width:500px; background:var(--surface,rgba(255,255,255,0.75)); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border-radius:28px; border:1px solid var(--border2,rgba(232,121,249,0.25)); overflow:visible; display:flex; flex-direction:column; height:95vh; max-height:780px; box-shadow:0 8px 48px rgba(168,85,247,0.14); transition:background 0.4s; position:relative; }
 
 /* SETUP */
 .setup-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:2.5rem 2rem; gap:1.2rem; background:var(--body-bg,linear-gradient(160deg,#fdf4ff 0%,#eef6ff 55%,#f0fff4 100%)); transition:background 0.4s; }
@@ -75,7 +75,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .chat-screen { display:none; flex-direction:column; height:100%; }
 .chat-screen.visible { display:flex; }
 
-.header { padding:12px 16px; border-bottom:1px solid var(--border,rgba(232,121,249,0.15)); display:flex; align-items:center; gap:10px; background:var(--header-bg,rgba(255,255,255,0.7)); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); flex-shrink:0; transition:background 0.4s; }
+.header { padding:12px 16px; border-bottom:1px solid var(--border,rgba(232,121,249,0.15)); display:flex; align-items:center; gap:10px; background:var(--header-bg,rgba(255,255,255,0.7)); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); flex-shrink:0; transition:background 0.4s; overflow:visible; position:relative; z-index:100; }
 .header-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--bubble-me-grad,#e879f9,#60a5fa)); display:flex; align-items:center; justify-content:center; font-size:15px; color:#fff; font-weight:700; flex-shrink:0; }
 .header-info { flex:1; min-width:0; }
 .header-name { font-size:14px; font-weight:700; color:var(--text,#1e1b4b); }
@@ -219,7 +219,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:0.4} 30%{transform:translateY(-4px);opacity:1} }
 
 /* GIF PANEL */
-.gif-panel { display:none; flex-direction:column; border-top:1px solid var(--border,rgba(232,121,249,0.15)); background:var(--surface2,rgba(255,255,255,0.7)); flex-shrink:0; max-height:220px; }
+.gif-panel { display:none; flex-direction:column; border-top:1px solid var(--border,rgba(232,121,249,0.15)); background:var(--surface2,rgba(255,255,255,0.7)); flex-shrink:0; max-height:220px; overflow:hidden; }
 .gif-panel.show { display:flex; }
 .gif-search-bar { padding:8px 10px; display:flex; gap:6px; border-bottom:1px solid var(--border,rgba(232,121,249,0.12)); flex-shrink:0; }
 .gif-search-input { flex:1; padding:6px 10px; border:1.5px solid var(--border2,rgba(168,85,247,0.2)); border-radius:20px; font-size:13px; font-family:var(--font-ui); background:var(--input-bg,rgba(255,255,255,0.8)); color:var(--text,#1e1b4b); outline:none; -webkit-appearance:none; }
@@ -229,7 +229,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .gif-loading { padding:20px; text-align:center; font-size:12px; color:var(--muted); }
 
 /* LOAD MORE */
-.load-more-btn { display:none; margin:0 auto 8px; padding:6px 16px; background:var(--surface2,rgba(255,255,255,0.8)); border:1px solid var(--border2,rgba(168,85,247,0.2)); border-radius:20px; font-size:12px; color:var(--muted,#9d86c8); cursor:pointer; -webkit-appearance:none; }
+.load-more-btn { display:none; padding:6px 16px; background:var(--surface2,rgba(255,255,255,0.8)); border:1px solid var(--border2,rgba(168,85,247,0.2)); border-radius:20px; font-size:12px; color:var(--muted,#9d86c8); cursor:pointer; -webkit-appearance:none; align-self:center; flex-shrink:0; }
 .load-more-btn.show { display:block; }
 
 /* TAREAS */
@@ -305,6 +305,30 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .audio-speed-btn { font-size:10px; font-weight:700; color:var(--muted); background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:1px 5px; cursor:pointer; -webkit-appearance:none; flex-shrink:0; }
 .msg-row.me .audio-speed-btn { background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.3); color:rgba(255,255,255,0.8); }
 
+/* HEADER MENU */
+.header-menu-btn { width:32px; height:32px; border-radius:50%; background:var(--surface2,rgba(255,255,255,0.7)); border:1px solid var(--border2,rgba(168,85,247,0.2)); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; -webkit-appearance:none; position:relative; }
+.header-menu-dropdown { display:none; position:fixed; top:60px; right:calc(50% - 240px); background:var(--surface,rgba(255,255,255,0.97)); border:1px solid var(--border2,rgba(168,85,247,0.2)); border-radius:16px; padding:6px; box-shadow:0 8px 32px rgba(168,85,247,0.22); z-index:1000; flex-direction:column; gap:2px; min-width:170px; backdrop-filter:blur(20px); animation:popIn 0.18s cubic-bezier(0.34,1.56,0.64,1); }
+.header-menu-dropdown.show { display:flex; }
+.header-menu-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:10px; cursor:pointer; border:none; background:none; width:100%; text-align:left; font-size:13px; color:var(--text,#1e1b4b); font-family:var(--font-ui); -webkit-appearance:none; }
+.header-menu-item:hover { background:var(--surface2,rgba(168,85,247,0.07)); }
+.header-menu-item-icon { font-size:17px; width:22px; text-align:center; }
+
+/* ATTACH MENU (al estilo WhatsApp) */
+.attach-menu-wrap { position:relative; flex-shrink:0; }
+.attach-btn { width:34px; height:34px; background:var(--surface2,rgba(255,255,255,0.75)); border:1px solid var(--border2,rgba(168,85,247,0.2)); border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:18px; -webkit-appearance:none; transition:transform 0.2s; }
+.attach-btn.open { transform:rotate(45deg); }
+.attach-menu { display:none; position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); flex-direction:column; gap:10px; align-items:center; z-index:200; }
+.attach-menu.show { display:flex; }
+.attach-item { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; animation:attachPop 0.2s cubic-bezier(0.34,1.56,0.64,1) both; }
+.attach-item:nth-child(1){animation-delay:0.00s}
+.attach-item:nth-child(2){animation-delay:0.04s}
+.attach-item:nth-child(3){animation-delay:0.08s}
+.attach-item:nth-child(4){animation-delay:0.12s}
+.attach-item:nth-child(5){animation-delay:0.16s}
+@keyframes attachPop { from{opacity:0;transform:translateY(10px) scale(0.8)} to{opacity:1;transform:translateY(0) scale(1)} }
+.attach-item-btn { width:46px; height:46px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:22px; -webkit-appearance:none; box-shadow:0 3px 12px rgba(0,0,0,0.15); }
+.attach-item-label { font-size:10px; font-weight:600; color:var(--text,#1e1b4b); white-space:nowrap; background:var(--surface,rgba(255,255,255,0.9)); padding:2px 6px; border-radius:8px; border:1px solid var(--border,rgba(168,85,247,0.15)); }
+
 /* GIF TRENDING TABS */
 .gif-tabs { display:flex; gap:6px; padding:6px 10px 0; flex-shrink:0; }
 .gif-tab { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border2,rgba(168,85,247,0.2)); background:var(--surface2,rgba(255,255,255,0.7)); color:var(--muted,#9d86c8); -webkit-appearance:none; }
@@ -357,9 +381,14 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
         <div class="header-status" id="statusText">Conectando...</div>
       </div>
       <div class="unread-badge" id="unreadBadge">nuevo</div>
-      <button class="sound-btn-header" id="soundHeaderBtn" title="Sonidos">🔔</button>
-      <button class="task-btn-header" id="taskHeaderBtn" title="Lista de tareas">✅</button>
-      <button class="theme-btn" id="themeToggleBtn" title="Cambiar tema">🎨</button>
+      <div style="position:relative;">
+        <button class="header-menu-btn" id="headerMenuBtn" title="Opciones">⋯</button>
+        <div class="header-menu-dropdown" id="headerMenuDropdown">
+          <button class="header-menu-item" onclick="openSoundPanel();closeHeaderMenu()"><span class="header-menu-item-icon">🔔</span>Sonidos</button>
+          <button class="header-menu-item" onclick="document.getElementById('tasksOverlay').classList.add('show');document.getElementById('taskInput').focus();closeHeaderMenu()"><span class="header-menu-item-icon">✅</span>Lista de tareas</button>
+          <button class="header-menu-item" onclick="closeHeaderMenu();setTimeout(function(){document.getElementById('themePanel').classList.toggle('show');},50)"><span class="header-menu-item-icon">🎨</span>Cambiar tema</button>
+        </div>
+      </div>
     </div>
 
     <!-- PANEL DE TEMAS (dentro del chat) -->
@@ -384,8 +413,8 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <span class="typing-dots"><span></span><span></span><span></span></span>
     </div>
     <div class="messages-wrap">
-      <button class="load-more-btn" id="loadMoreBtn">⬆ Cargar mensajes anteriores</button>
       <div class="messages" id="messagesContainer">
+        <button class="load-more-btn" id="loadMoreBtn" style="margin:0 auto 8px;">⬆ Cargar mensajes anteriores</button>
         <div class="empty-state" id="emptyState">Sin mensajes aún — ¡manda un Ping!</div>
       </div>
       <button class="scroll-bottom-btn" id="scrollBottomBtn" onclick="scrollToBottom()" title="Ir a los mensajes recientes">
@@ -398,9 +427,10 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <button class="reply-cancel" onclick="cancelReply()">✕</button>
     </div>
     <div class="gif-panel" id="gifPanel">
-      <div class="gif-tabs">
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 10px 0;">
         <button class="gif-tab active" id="gifTabTrending" onclick="switchGifTab('trending')">🔥 Trending</button>
         <button class="gif-tab" id="gifTabSearch" onclick="switchGifTab('search')">🔍 Buscar</button>
+        <button onclick="document.getElementById('gifPanel').classList.remove('show')" style="margin-left:auto;background:none;border:none;font-size:15px;color:var(--muted);cursor:pointer;padding:2px 4px;">✕</button>
       </div>
       <div class="gif-search-bar" id="gifSearchBar" style="display:none;">
         <input class="gif-search-input" id="gifSearchInput" type="text" placeholder="Buscar GIFs..." autocomplete="off" />
@@ -409,16 +439,36 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <div class="gif-grid" id="gifGrid"><div class="gif-loading">Cargando trending...</div></div>
     </div>
     <div class="sticker-panel" id="stickerPanel">
-      <div class="sticker-panel-title">Stickers</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div class="sticker-panel-title" style="margin-bottom:0;">Stickers</div>
+        <button onclick="document.getElementById('stickerPanel').classList.remove('show')" style="background:none;border:none;font-size:16px;color:var(--muted);cursor:pointer;line-height:1;padding:2px 4px;">✕</button>
+      </div>
       <div class="sticker-grid" id="stickerGrid"></div>
     </div>
     <div class="input-area">
+      <div class="attach-menu-wrap">
+        <button class="attach-btn" id="attachBtn" title="Adjuntar">📎</button>
+        <div class="attach-menu" id="attachMenu">
+          <div class="attach-item" onclick="toggleStickerFromAttach();event.stopPropagation();">
+            <button class="attach-item-btn" style="background:linear-gradient(135deg,#f9a8d4,#e879f9);">😄</button>
+            <span class="attach-item-label">Stickers</span>
+          </div>
+          <div class="attach-item" onclick="document.getElementById('fileInput').click();closeAttachMenu()">
+            <button class="attach-item-btn" style="background:linear-gradient(135deg,#60a5fa,#818cf8);">🖼️</button>
+            <span class="attach-item-label">Imagen</span>
+          </div>
+          <div class="attach-item" onclick="document.getElementById('cameraInput').click();closeAttachMenu()">
+            <button class="attach-item-btn" style="background:linear-gradient(135deg,#34d399,#60a5fa);">📸</button>
+            <span class="attach-item-label">Cámara</span>
+          </div>
+          <div class="attach-item" onclick="toggleGifFromAttach();event.stopPropagation();">
+            <button class="attach-item-btn" style="background:linear-gradient(135deg,#fb923c,#f472b6);">GIF</button>
+            <span class="attach-item-label">GIF</span>
+          </div>
+        </div>
+      </div>
       <div class="input-wrap">
         <div class="input-tools">
-          <button class="tool-btn" id="stickerBtn">😄</button>
-          <button class="tool-btn" id="imgBtn">🖼️</button>
-          <button class="tool-btn" id="cameraBtn" title="Tomar foto">📸</button>
-          <button class="tool-btn" id="gifBtn">GIF</button>
           <div class="rec-indicator" id="recIndicator">
             <div class="rec-dot"></div>
             <span class="rec-time" id="recTime">0:00</span>
@@ -613,31 +663,19 @@ document.getElementById('myNameInput').addEventListener('keydown', function(e) {
 document.getElementById('pingBtn').addEventListener('click', sendPing);
 document.getElementById('sendBtn').addEventListener('click', sendMessage);
 document.getElementById('msgInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(); });
-document.getElementById('stickerBtn').addEventListener('click', toggleStickers);
-document.getElementById('imgBtn').addEventListener('click', function() { document.getElementById('fileInput').click(); });
+// stickerBtn/imgBtn moved to attach menu
 document.getElementById('fileInput').addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (file) uploadAndSendImage(file);
   e.target.value = '';
 });
-document.getElementById('cameraBtn').addEventListener('click', function() {
-  document.getElementById('cameraInput').click();
-});
+// cameraBtn moved to attach menu
 document.getElementById('cameraInput').addEventListener('change', function(e) {
   var file = e.target.files[0];
   if (file) uploadAndSendImage(file);
   e.target.value = '';
 });
-document.getElementById('gifBtn').addEventListener('click', function() {
-  var gp = document.getElementById('gifPanel');
-  var sp = document.getElementById('stickerPanel');
-  sp.classList.remove('show');
-  var wasHidden = !gp.classList.contains('show');
-  gp.classList.toggle('show');
-  if (wasHidden) {
-    switchGifTab('trending');
-  }
-});
+// gif/sticker/img/camera wired via attach menu
 document.getElementById('gifSearchInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') searchGifs(); });
 
 // Voice recording — press and hold
@@ -647,17 +685,22 @@ voiceBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startR
 voiceBtn.addEventListener('mouseup', stopRecording);
 voiceBtn.addEventListener('mouseleave', stopRecording);
 voiceBtn.addEventListener('touchend', function(e) { e.preventDefault(); stopRecording(); }, { passive: false });
-document.getElementById('soundHeaderBtn').addEventListener('click', function() {
-  openSoundPanel();
-});
-document.getElementById('taskHeaderBtn').addEventListener('click', function() {
-  document.getElementById('tasksOverlay').classList.add('show');
-  document.getElementById('taskInput').focus();
-});
 document.getElementById('taskInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') addTask(); });
 document.getElementById('loadMoreBtn').addEventListener('click', loadMoreMsgs);
-document.getElementById('themeToggleBtn').addEventListener('click', function() {
-  document.getElementById('themePanel').classList.toggle('show');
+
+// Header menu
+document.getElementById('headerMenuBtn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  document.getElementById('headerMenuDropdown').classList.toggle('show');
+});
+
+// Attach menu
+document.getElementById('attachBtn').addEventListener('click', function(e) {
+  e.stopPropagation();
+  var menu = document.getElementById('attachMenu');
+  var isOpen = menu.classList.contains('show');
+  menu.classList.toggle('show');
+  document.getElementById('attachBtn').classList.toggle('open', !isOpen);
 });
 
 // Ctrl+V pegar imágenes
@@ -678,7 +721,7 @@ document.addEventListener('click', function(e) {
   if (!e.target.closest('.bubble-wrap')) {
     document.querySelectorAll('.reaction-picker.show').forEach(function(p) { p.classList.remove('show'); });
   }
-  if (!e.target.closest('.gif-panel') && !e.target.closest('#gifBtn')) {
+  if (!e.target.closest('.gif-panel') && !e.target.closest('.attach-menu-wrap')) {
     document.getElementById('gifPanel').classList.remove('show');
   }
   if (!e.target.closest('.tasks-panel') && !e.target.closest('#taskHeaderBtn')) {
@@ -1210,6 +1253,27 @@ function uploadAndSendImage(file) {
 
 function openLightbox(url) { document.getElementById('lightboxImg').src = url; document.getElementById('lightbox').classList.add('show'); }
 function toggleStickers() { document.getElementById('stickerPanel').classList.toggle('show'); }
+
+function closeHeaderMenu() { document.getElementById('headerMenuDropdown').classList.remove('show'); }
+
+function closeAttachMenu() {
+  document.getElementById('attachMenu').classList.remove('show');
+  document.getElementById('attachBtn').classList.remove('open');
+}
+
+function toggleStickerFromAttach() {
+  closeAttachMenu();
+  document.getElementById('gifPanel').classList.remove('show');
+  document.getElementById('stickerPanel').classList.toggle('show');
+}
+
+function toggleGifFromAttach() {
+  closeAttachMenu();
+  document.getElementById('stickerPanel').classList.remove('show');
+  var gp = document.getElementById('gifPanel');
+  gp.classList.add('show');
+  switchGifTab('trending');
+}
 
 function showNotifOverlay(sender) {
   document.getElementById('notifTitle').textContent = '¡' + sender + ' mandó un PING!';
