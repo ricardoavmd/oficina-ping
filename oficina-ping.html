@@ -266,6 +266,19 @@ input[type="text"]:focus { border-color:var(--accent2); }
 .scroll-bottom-btn .scroll-badge.show { display:flex; }
 .messages-wrap { flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column; }
 
+/* REMINDER PICKER */
+.reminder-picker { display:none; position:absolute; background:var(--surface); border:1px solid var(--border2); border-radius:14px; padding:8px; z-index:100; box-shadow:0 4px 20px rgba(0,0,0,0.15); flex-direction:column; gap:4px; min-width:160px; }
+.reminder-picker.show { display:flex; }
+.reminder-opt { padding:8px 12px; border-radius:8px; font-size:13px; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:8px; background:none; border:none; width:100%; text-align:left; -webkit-appearance:none; }
+.reminder-opt:hover { background:var(--surface2); }
+.reminder-opt-icon { font-size:15px; }
+
+/* REMINDER TOAST */
+.reminder-toast { display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--accent2); color:#fff; padding:12px 20px; border-radius:14px; font-size:14px; font-weight:600; z-index:2000; box-shadow:0 4px 20px rgba(0,0,0,0.25); align-items:center; gap:10px; max-width:90vw; animation:toastIn 0.3s ease; cursor:pointer; }
+.reminder-toast.show { display:flex; }
+@keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(-10px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+.reminder-toast-close { background:rgba(255,255,255,0.2); border:none; color:#fff; border-radius:50%; width:22px; height:22px; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
 /* AUDIO SPEED */
 .audio-speed-btn { font-size:10px; font-weight:700; color:var(--muted); background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:1px 5px; cursor:pointer; -webkit-appearance:none; flex-shrink:0; }
 .msg-row.me .audio-speed-btn { background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.3); color:rgba(255,255,255,0.8); }
@@ -382,6 +395,7 @@ input[type="text"]:focus { border-color:var(--accent2); }
         <div class="input-tools">
           <button class="tool-btn" id="stickerBtn">😄</button>
           <button class="tool-btn" id="imgBtn">🖼️</button>
+          <button class="tool-btn" id="cameraBtn" title="Tomar foto">📸</button>
           <button class="tool-btn" id="gifBtn">GIF</button>
           <div class="rec-indicator" id="recIndicator">
             <div class="rec-dot"></div>
@@ -398,6 +412,7 @@ input[type="text"]:focus { border-color:var(--accent2); }
         <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <input type="file" id="fileInput" accept="image/*" />
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" />
     </div>
   </div>
 </div>
@@ -415,6 +430,22 @@ input[type="text"]:focus { border-color:var(--accent2); }
     </div>
     <div class="tasks-list" id="tasksList"><div class="tasks-empty">Sin tareas aún 🎉</div></div>
   </div>
+</div>
+
+<!-- REMINDER TOAST -->
+<div class="reminder-toast" id="reminderToast" onclick="goToRemindedMsg()">
+  <span style="font-size:18px;">⏰</span>
+  <span id="reminderToastText">Recordatorio</span>
+  <button class="reminder-toast-close" onclick="closeReminderToast(event)">✕</button>
+</div>
+
+<!-- REMINDER PICKER (positioned dynamically) -->
+<div class="reminder-picker" id="reminderPicker">
+  <button class="reminder-opt" onclick="setReminder(15)"><span class="reminder-opt-icon">⏰</span>En 15 minutos</button>
+  <button class="reminder-opt" onclick="setReminder(30)"><span class="reminder-opt-icon">🕐</span>En 30 minutos</button>
+  <button class="reminder-opt" onclick="setReminder(60)"><span class="reminder-opt-icon">🕑</span>En 1 hora</button>
+  <button class="reminder-opt" onclick="setReminder(120)"><span class="reminder-opt-icon">🕒</span>En 2 horas</button>
+  <button class="reminder-opt" onclick="setReminder(480)"><span class="reminder-opt-icon">🌅</span>Mañana por la mañana</button>
 </div>
 
 <!-- SONIDOS OVERLAY -->
@@ -480,6 +511,9 @@ var SOUNDS = {
 var selectedMsgSound = localStorage.getItem('ping-sound-msg') || 'ping';
 var selectedPingSound = localStorage.getItem('ping-sound-ping') || 'triple';
 var editingKey = null;
+var activeReminders = [];
+var reminderMsgKey = null;
+var reminderMsgText = '';
 var mediaRecorder = null;
 var audioChunks = [];
 var recTimerInterval = null;
@@ -564,6 +598,14 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
   if (file) uploadAndSendImage(file);
   e.target.value = '';
 });
+document.getElementById('cameraBtn').addEventListener('click', function() {
+  document.getElementById('cameraInput').click();
+});
+document.getElementById('cameraInput').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (file) uploadAndSendImage(file);
+  e.target.value = '';
+});
 document.getElementById('gifBtn').addEventListener('click', function() {
   var gp = document.getElementById('gifPanel');
   var sp = document.getElementById('stickerPanel');
@@ -619,6 +661,10 @@ document.addEventListener('click', function(e) {
   }
   if (!e.target.closest('.tasks-panel') && !e.target.closest('#taskHeaderBtn')) {
     // handled by closeTasksIfOutside
+  }
+  if (!e.target.closest('.reminder-picker') && !e.target.closest('.action-btn[data-reminder]')) {
+    document.getElementById('reminderPicker').classList.remove('show');
+    reminderMsgKey = null;
   }
   if (!e.target.closest('.theme-panel') && !e.target.closest('#themeToggleBtn')) {
     document.getElementById('themePanel').classList.remove('show');
@@ -838,6 +884,7 @@ function renderMessage(key, data, isMe) {
     '<button class="action-btn" onclick="startReply(\'' + key + '\',event)">↩ Responder</button>' +
     (isMe && data.type === 'text' ? '<button class="action-btn" onclick="startEdit(\'' + key + '\',event)">✏️ Editar</button>' : '') +
     (data.type === 'text' ? '<button class="action-btn" onclick="pinMessage(\'' + key + '\',event)">📌 Fijar</button>' : '') +
+    '<button class="action-btn" data-reminder="1" onclick="openReminderPicker(\'' + key + '\',event)">⏰ Recordar</button>' +
   '</div>';
   row.innerHTML =
     '<div class="msg-avatar">' + esc(data.sender[0].toUpperCase()) + '</div>' +
@@ -1539,6 +1586,84 @@ function startBlink(sender) {
     on = !on;
   }, 700);
 }
+// ── REMINDER FUNCTIONS ──────────────────────
+function openReminderPicker(key, e) {
+  e.stopPropagation();
+  reminderMsgKey = key;
+  var msgEl = document.getElementById('msg-' + key);
+  var bubbleEl = msgEl ? msgEl.querySelector('.bubble') : null;
+  reminderMsgText = bubbleEl ? bubbleEl.textContent.replace(/[0-9]{1,2}:[0-9]{2}/,'').trim().substring(0,50) : 'Mensaje';
+  var picker = document.getElementById('reminderPicker');
+  var rect = e.target.getBoundingClientRect();
+  var appRect = document.querySelector('.app').getBoundingClientRect();
+  picker.style.top = (rect.top - appRect.top - 10) + 'px';
+  // Position left or right depending on space
+  if (rect.left - appRect.left > 160) {
+    picker.style.left = (rect.left - appRect.left - 170) + 'px';
+  } else {
+    picker.style.left = (rect.left - appRect.left) + 'px';
+  }
+  picker.classList.add('show');
+}
+
+function setReminder(minutes) {
+  var picker = document.getElementById('reminderPicker');
+  picker.classList.remove('show');
+  if (!reminderMsgKey) return;
+  var key = reminderMsgKey;
+  var text = reminderMsgText;
+  var label = minutes < 60 ? 'En ' + minutes + ' min' : minutes === 60 ? 'En 1 hora' : minutes < 480 ? 'En ' + (minutes/60) + ' horas' : 'Mañana';
+
+  // Show confirmation
+  showMiniToast('⏰ Recordatorio programado: ' + label);
+
+  // Schedule the reminder
+  var delay = minutes === 480 ? getMorningDelay() : minutes * 60 * 1000;
+  var timerId = setTimeout(function() {
+    showReminderToast(key, text);
+  }, delay);
+  activeReminders.push({ key: key, timerId: timerId });
+  reminderMsgKey = null;
+}
+
+function getMorningDelay() {
+  var now = new Date();
+  var tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(9, 0, 0, 0);
+  return tomorrow.getTime() - now.getTime();
+}
+
+function showReminderToast(key, text) {
+  var toast = document.getElementById('reminderToast');
+  document.getElementById('reminderToastText').textContent = '⏰ Recordatorio: "' + text + '"';
+  toast._msgKey = key;
+  toast.classList.add('show');
+  playBeep(false);
+  // Auto hide after 8s
+  setTimeout(function() { toast.classList.remove('show'); }, 8000);
+}
+
+function goToRemindedMsg() {
+  var toast = document.getElementById('reminderToast');
+  var key = toast._msgKey;
+  toast.classList.remove('show');
+  if (key) scrollToMsg(key);
+}
+
+function closeReminderToast(e) {
+  e.stopPropagation();
+  document.getElementById('reminderToast').classList.remove('show');
+}
+
+function showMiniToast(msg) {
+  var el = document.createElement('div');
+  el.textContent = msg;
+  el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent2);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;z-index:2000;animation:toastIn 0.3s ease;pointer-events:none;';
+  document.body.appendChild(el);
+  setTimeout(function() { el.remove(); }, 2500);
+}
+
 function scrollToBottom() {
   var msgsEl = document.getElementById('messagesContainer');
   msgsEl.scrollTo({ top: msgsEl.scrollHeight, behavior: 'smooth' });
