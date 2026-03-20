@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2c3e50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ping">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232c3e50'/><path d='M38 58h116v74a12 12 0 01-12 12H50a12 12 0 01-12-12V58z' stroke='white' stroke-width='10' fill='none'/><path d='M38 58l58 52 58-52' stroke='white' stroke-width='10' fill='none'/></svg>">
 <title>Ping — Oficina</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -875,6 +881,15 @@ function clearBlink() { clearInterval(blinkInterval); blinkInterval = null; docu
 function getTime() { var n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); }
 function pad(n) { return n.toString().padStart(2, '0'); }
 function esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Registrar Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('sw.js').catch(function(err) {
+      console.log('SW error:', err);
+    });
+  });
+}
 </script>
 </body>
 </html>
