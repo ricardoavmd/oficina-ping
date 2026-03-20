@@ -233,6 +233,32 @@ input[type="text"]:focus { border-color:var(--accent2); }
 .tasks-empty { font-size:13px; color:var(--muted2); text-align:center; padding:20px; }
 .task-btn-header { width:30px; height:30px; border-radius:50%; background:var(--surface2); border:1px solid var(--border2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; -webkit-appearance:none; }
 
+/* EDIT MESSAGE */
+.bubble-edit-wrap { display:flex; flex-direction:column; gap:4px; width:100%; }
+.edit-input { width:100%; padding:7px 10px; border:1.5px solid var(--accent2); border-radius:12px; font-size:14px; font-family:var(--font-ui); background:rgba(255,255,255,0.15); color:inherit; outline:none; -webkit-appearance:none; resize:none; }
+.msg-row.them .edit-input { background:var(--bg); color:var(--text); }
+.edit-actions { display:flex; gap:6px; }
+.edit-save-btn { padding:4px 12px; background:var(--accent2); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; -webkit-appearance:none; }
+.edit-cancel-btn { padding:4px 12px; background:transparent; color:inherit; border:1px solid rgba(255,255,255,0.3); border-radius:8px; font-size:12px; cursor:pointer; -webkit-appearance:none; opacity:0.7; }
+.msg-row.them .edit-cancel-btn { border-color:var(--border2); color:var(--muted); }
+.edited-tag { font-size:9px; opacity:0.45; margin-left:4px; }
+
+/* SOUND PANEL */
+.sound-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:998; align-items:flex-end; justify-content:center; }
+.sound-overlay.show { display:flex; }
+.sound-panel { background:var(--surface); border-radius:22px 22px 0 0; width:100%; max-width:500px; padding:1.2rem 1.2rem 2rem; display:flex; flex-direction:column; gap:12px; animation:slideUp 0.25s ease; }
+.sound-header { display:flex; align-items:center; justify-content:space-between; }
+.sound-title { font-size:15px; font-weight:600; color:var(--text); }
+.sound-close { background:none; border:none; font-size:20px; color:var(--muted); cursor:pointer; }
+.sound-section-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:4px; }
+.sound-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.sound-opt { display:flex; align-items:center; gap:8px; padding:10px 12px; border:1.5px solid var(--border2); border-radius:12px; cursor:pointer; transition:border-color 0.15s,background 0.15s; -webkit-appearance:none; background:var(--surface2); }
+.sound-opt.active { border-color:var(--accent2); background:var(--surface3); }
+.sound-opt-icon { font-size:20px; }
+.sound-opt-name { font-size:13px; font-weight:500; color:var(--text); flex:1; }
+.sound-preview-btn { background:none; border:none; font-size:14px; cursor:pointer; padding:0; color:var(--muted); }
+.sound-btn-header { width:30px; height:30px; border-radius:50%; background:var(--surface2); border:1px solid var(--border2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; -webkit-appearance:none; }
+
 /* AUDIO SPEED */
 .audio-speed-btn { font-size:10px; font-weight:700; color:var(--muted); background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:1px 5px; cursor:pointer; -webkit-appearance:none; flex-shrink:0; }
 .msg-row.me .audio-speed-btn { background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.3); color:rgba(255,255,255,0.8); }
@@ -289,6 +315,7 @@ input[type="text"]:focus { border-color:var(--accent2); }
         <div class="header-status" id="statusText">Conectando...</div>
       </div>
       <div class="unread-badge" id="unreadBadge">nuevo</div>
+      <button class="sound-btn-header" id="soundHeaderBtn" title="Sonidos">🔔</button>
       <button class="task-btn-header" id="taskHeaderBtn" title="Lista de tareas">✅</button>
       <button class="theme-btn" id="themeToggleBtn" title="Cambiar tema">🎨</button>
     </div>
@@ -377,6 +404,24 @@ input[type="text"]:focus { border-color:var(--accent2); }
   </div>
 </div>
 
+<!-- SONIDOS OVERLAY -->
+<div class="sound-overlay" id="soundOverlay" onclick="closeSoundIfOutside(event)">
+  <div class="sound-panel">
+    <div class="sound-header">
+      <span class="sound-title">🔔 Sonido de notificaciones</span>
+      <button class="sound-close" onclick="closeSound()">✕</button>
+    </div>
+    <div>
+      <div class="sound-section-label">Mensajes nuevos</div>
+      <div class="sound-grid" id="soundGridMsg"></div>
+    </div>
+    <div>
+      <div class="sound-section-label">PING urgente</div>
+      <div class="sound-grid" id="soundGridPing"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
@@ -403,6 +448,25 @@ var currentAudioKey = null;
 var audioSpeeds = [1, 1.5, 2];
 var audioSpeedIdx = 0;
 var currentGifTab = 'trending';
+
+// Sound settings
+var SOUNDS = {
+  msg: [
+    { id:'ping', name:'Ping suave', icon:'🔔' },
+    { id:'pop', name:'Pop', icon:'💬' },
+    { id:'chime', name:'Campana', icon:'🎵' },
+    { id:'none', name:'Sin sonido', icon:'🔇' }
+  ],
+  ping: [
+    { id:'triple', name:'Triple bip', icon:'🚨' },
+    { id:'alarm', name:'Alarma', icon:'⚡' },
+    { id:'fanfare', name:'Fanfarria', icon:'🎺' },
+    { id:'none', name:'Sin sonido', icon:'🔇' }
+  ]
+};
+var selectedMsgSound = localStorage.getItem('ping-sound-msg') || 'ping';
+var selectedPingSound = localStorage.getItem('ping-sound-ping') || 'triple';
+var editingKey = null;
 var mediaRecorder = null;
 var audioChunks = [];
 var recTimerInterval = null;
@@ -506,6 +570,9 @@ voiceBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startR
 voiceBtn.addEventListener('mouseup', stopRecording);
 voiceBtn.addEventListener('mouseleave', stopRecording);
 voiceBtn.addEventListener('touchend', function(e) { e.preventDefault(); stopRecording(); }, { passive: false });
+document.getElementById('soundHeaderBtn').addEventListener('click', function() {
+  openSoundPanel();
+});
 document.getElementById('taskHeaderBtn').addEventListener('click', function() {
   document.getElementById('tasksOverlay').classList.add('show');
   document.getElementById('taskInput').focus();
@@ -663,6 +730,20 @@ function startApp() {
     var all = snap.val() || {};
     Object.keys(all).forEach(function(key) {
       if (all[key] && all[key].reactions) updateReactionsUI(key, all[key].reactions);
+      // Apply edits to rendered messages
+      if (all[key] && all[key].edited) {
+        var bubbleEl = document.querySelector('#msg-' + key + ' .bubble');
+        if (bubbleEl && all[key].type === 'text') {
+          var inner = formatText(all[key].text || '') + '<span class="edited-tag">(editado)</span>';
+          var timeEl = bubbleEl.querySelector('.time');
+          var pickerEl = bubbleEl.querySelector('.reaction-picker');
+          var replyEl = bubbleEl.querySelector('.reply-quote');
+          var timeHtml = timeEl ? timeEl.outerHTML : '';
+          var pickerHtml = pickerEl ? pickerEl.outerHTML : '';
+          var replyHtml = replyEl ? replyEl.outerHTML : '';
+          bubbleEl.innerHTML = replyHtml + inner + timeHtml + pickerHtml;
+        }
+      }
     });
   });
 }
@@ -701,7 +782,7 @@ function renderMessage(key, data, isMe) {
     bubbleContent = '<span style="font-size:48px;line-height:1;">' + esc(data.text) + '</span>';
     bubbleClass = 'bubble sticker';
   } else {
-    bubbleContent = formatText(data.text);
+    bubbleContent = formatText(data.text) + (data.edited ? '<span class="edited-tag">(editado)</span>' : '');
   }
   var pickerHtml = '<div class="reaction-picker" id="picker-' + key + '">' +
     REACTIONS.map(function(r) { return '<span class="r-opt" onclick="addReaction(\'' + key + '\',\'' + r + '\',event)">' + r + '</span>'; }).join('') + '</div>';
@@ -715,6 +796,7 @@ function renderMessage(key, data, isMe) {
   }
   var actionsHtml = '<div class="msg-row-actions">' +
     '<button class="action-btn" onclick="startReply(\'' + key + '\',event)">↩ Responder</button>' +
+    (isMe && data.type === 'text' ? '<button class="action-btn" onclick="startEdit(\'' + key + '\',event)">✏️ Editar</button>' : '') +
     (data.type === 'text' ? '<button class="action-btn" onclick="pinMessage(\'' + key + '\',event)">📌 Fijar</button>' : '') +
   '</div>';
   row.innerHTML =
@@ -1183,7 +1265,7 @@ function renderMessageIntoRow(row, key, data, isMe) {
     bubbleContent = '<span style="font-size:48px;line-height:1;">' + esc(data.text) + '</span>';
     bubbleClass = 'bubble sticker';
   } else {
-    bubbleContent = formatText(data.text || '');
+    bubbleContent = formatText(data.text || '') + (data.edited ? '<span class="edited-tag">(editado)</span>' : '');
   }
   var replyQuoteHtml = '';
   if (data.replyTo) {
@@ -1284,20 +1366,126 @@ function fireSystemNotif(title, body) {
 function playBeep(loud) {
   try {
     var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    var n = loud ? 3 : 1;
-    for (var i = 0; i < n; i++) {
-      (function(i) {
-        var o = ctx.createOscillator(), g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = loud ? 880 : 660; o.type = 'sine';
-        var t = ctx.currentTime + i * 0.22;
-        g.gain.setValueAtTime(0.3, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-        o.start(t); o.stop(t + 0.18);
-      })(i);
-    }
+    var soundId = loud ? selectedPingSound : selectedMsgSound;
+    if (soundId === 'none') return;
+    var patterns = {
+      'ping':    [{ f:660, d:0.15, t:0 }],
+      'pop':     [{ f:800, d:0.08, t:0 }, { f:600, d:0.08, t:0.1 }],
+      'chime':   [{ f:523, d:0.2, t:0 }, { f:659, d:0.2, t:0.12 }, { f:784, d:0.3, t:0.24 }],
+      'triple':  [{ f:880, d:0.18, t:0 }, { f:880, d:0.18, t:0.22 }, { f:880, d:0.18, t:0.44 }],
+      'alarm':   [{ f:440, d:0.1, t:0 }, { f:880, d:0.1, t:0.12 }, { f:440, d:0.1, t:0.24 }, { f:880, d:0.1, t:0.36 }],
+      'fanfare': [{ f:523, d:0.15, t:0 }, { f:659, d:0.15, t:0.1 }, { f:784, d:0.15, t:0.2 }, { f:1047, d:0.3, t:0.32 }]
+    };
+    var notes = patterns[soundId] || patterns['ping'];
+    notes.forEach(function(note) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = note.f; o.type = 'sine';
+      var t = ctx.currentTime + note.t;
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + note.d);
+      o.start(t); o.stop(t + note.d + 0.05);
+    });
   } catch(e) {}
 }
+
+// EDIT FUNCTIONS
+function startEdit(key, e) {
+  e.stopPropagation();
+  if (editingKey) cancelEdit();
+  editingKey = key;
+  var row = document.getElementById('msg-' + key);
+  var bubble = row ? row.querySelector('.bubble') : null;
+  if (!bubble) return;
+  // Get current text (strip edited tag)
+  var textNode = '';
+  bubble.childNodes.forEach(function(n) {
+    if (n.nodeType === 3) textNode += n.textContent;
+    else if (n.classList && !n.classList.contains('time') && !n.classList.contains('reaction-picker') && !n.classList.contains('edited-tag') && !n.classList.contains('reply-quote')) textNode += n.textContent;
+  });
+  textNode = textNode.trim();
+  var timeEl = bubble.querySelector('.time');
+  var pickerEl = bubble.querySelector('.reaction-picker');
+  var replyEl = bubble.querySelector('.reply-quote');
+  var timeHtml = timeEl ? timeEl.outerHTML : '';
+  var pickerHtml = pickerEl ? pickerEl.outerHTML : '';
+  var replyHtml = replyEl ? replyEl.outerHTML : '';
+  bubble.innerHTML = replyHtml +
+    '<div class="bubble-edit-wrap">' +
+      '<textarea class="edit-input" id="editInput-' + key + '" rows="2">' + esc(textNode) + '</textarea>' +
+      '<div class="edit-actions">' +
+        '<button class="edit-save-btn" onclick="saveEdit(\'' + key + '\')">Guardar</button>' +
+        '<button class="edit-cancel-btn" onclick="cancelEdit()">Cancelar</button>' +
+      '</div>' +
+    '</div>' + timeHtml + pickerHtml;
+  var inp = document.getElementById('editInput-' + key);
+  if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+  inp && inp.addEventListener('keydown', function(ev) {
+    if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); saveEdit(key); }
+    if (ev.key === 'Escape') cancelEdit();
+  });
+}
+
+function saveEdit(key) {
+  var inp = document.getElementById('editInput-' + key);
+  if (!inp) return;
+  var newText = inp.value.trim();
+  if (!newText) { cancelEdit(); return; }
+  db.ref('msgs/' + key).update({ text: newText, edited: true });
+  editingKey = null;
+}
+
+function cancelEdit() {
+  if (!editingKey) return;
+  var key = editingKey;
+  editingKey = null;
+  // Re-render by fetching from Firebase
+  db.ref('msgs/' + key).once('value', function(snap) {
+    var data = snap.val();
+    if (!data) return;
+    var row = document.getElementById('msg-' + key);
+    if (!row) return;
+    var bubble = row.querySelector('.bubble');
+    if (!bubble) return;
+    var replyHtml = data.replyTo ? '<div class="reply-quote" onclick="scrollToMsg(\'' + data.replyTo.key + '\')">' +
+      '<div class="reply-quote-sender">' + esc(data.replyTo.sender) + '</div>' +
+      '<div class="reply-quote-text">' + esc(data.replyTo.text || '') + '</div></div>' : '';
+    var content = formatText(data.text || '') + (data.edited ? '<span class="edited-tag">(editado)</span>' : '');
+    var pickerHtml = '<div class="reaction-picker" id="picker-' + key + '">' +
+      REACTIONS.map(function(r){ return '<span class="r-opt" onclick="addReaction(\'' + key + '\',\'' + r + '\',event)">' + r + '</span>'; }).join('') + '</div>';
+    bubble.innerHTML = replyHtml + content + '<span class="time">' + esc(data.timeStr || '') + '</span>' + pickerHtml;
+  });
+}
+
+// SOUND PANEL FUNCTIONS
+function openSoundPanel() {
+  buildSoundGrid('soundGridMsg', SOUNDS.msg, 'msg');
+  buildSoundGrid('soundGridPing', SOUNDS.ping, 'ping');
+  document.getElementById('soundOverlay').classList.add('show');
+}
+
+function buildSoundGrid(containerId, sounds, type) {
+  var sel = type === 'msg' ? selectedMsgSound : selectedPingSound;
+  var el = document.getElementById(containerId);
+  el.innerHTML = '';
+  sounds.forEach(function(s) {
+    var btn = document.createElement('button');
+    btn.className = 'sound-opt' + (s.id === sel ? ' active' : '');
+    btn.innerHTML = '<span class="sound-opt-icon">' + s.icon + '</span>' +
+      '<span class="sound-opt-name">' + s.name + '</span>' +
+      '<span class="sound-preview-btn">▶</span>';
+    btn.addEventListener('click', function() {
+      if (type === 'msg') { selectedMsgSound = s.id; localStorage.setItem('ping-sound-msg', s.id); }
+      else { selectedPingSound = s.id; localStorage.setItem('ping-sound-ping', s.id); }
+      buildSoundGrid(containerId, sounds, type);
+      if (s.id !== 'none') playBeep(type === 'ping');
+    });
+    el.appendChild(btn);
+  });
+}
+
+function closeSound() { document.getElementById('soundOverlay').classList.remove('show'); }
+function closeSoundIfOutside(e) { if (e.target === document.getElementById('soundOverlay')) closeSound(); }
 
 function startBlink(sender) {
   if (blinkInterval) return;
