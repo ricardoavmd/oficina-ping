@@ -259,6 +259,13 @@ input[type="text"]:focus { border-color:var(--accent2); }
 .sound-preview-btn { background:none; border:none; font-size:14px; cursor:pointer; padding:0; color:var(--muted); }
 .sound-btn-header { width:30px; height:30px; border-radius:50%; background:var(--surface2); border:1px solid var(--border2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; -webkit-appearance:none; }
 
+/* SCROLL TO BOTTOM */
+.scroll-bottom-btn { display:none; position:absolute; bottom:16px; right:16px; width:40px; height:40px; border-radius:50%; background:var(--accent2); color:#fff; border:none; cursor:pointer; font-size:18px; box-shadow:0 2px 12px rgba(0,0,0,0.25); z-index:50; align-items:center; justify-content:center; transition:opacity 0.2s,transform 0.2s; -webkit-appearance:none; }
+.scroll-bottom-btn.show { display:flex; }
+.scroll-bottom-btn .scroll-badge { position:absolute; top:-4px; right:-4px; background:var(--accent); color:#fff; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:20px; display:none; align-items:center; justify-content:center; padding:0 4px; }
+.scroll-bottom-btn .scroll-badge.show { display:flex; }
+.messages-wrap { flex:1; position:relative; overflow:hidden; display:flex; flex-direction:column; }
+
 /* AUDIO SPEED */
 .audio-speed-btn { font-size:10px; font-weight:700; color:var(--muted); background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:1px 5px; cursor:pointer; -webkit-appearance:none; flex-shrink:0; }
 .msg-row.me .audio-speed-btn { background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.3); color:rgba(255,255,255,0.8); }
@@ -341,9 +348,15 @@ input[type="text"]:focus { border-color:var(--accent2); }
       <span id="typingName"></span>
       <span class="typing-dots"><span></span><span></span><span></span></span>
     </div>
-    <button class="load-more-btn" id="loadMoreBtn">⬆ Cargar mensajes anteriores</button>
-    <div class="messages" id="messagesContainer">
-      <div class="empty-state" id="emptyState">Sin mensajes aún — ¡manda un Ping!</div>
+    <div class="messages-wrap">
+      <button class="load-more-btn" id="loadMoreBtn">⬆ Cargar mensajes anteriores</button>
+      <div class="messages" id="messagesContainer">
+        <div class="empty-state" id="emptyState">Sin mensajes aún — ¡manda un Ping!</div>
+      </div>
+      <button class="scroll-bottom-btn" id="scrollBottomBtn" onclick="scrollToBottom()" title="Ir a los mensajes recientes">
+        ↓
+        <span class="scroll-badge" id="scrollBadge"></span>
+      </button>
     </div>
     <div class="reply-preview" id="replyPreview">
       <div class="reply-preview-text"><strong id="replyPreviewSender"></strong><span id="replyPreviewText"></span></div>
@@ -635,6 +648,23 @@ function startApp() {
   }
 
   setupTasks();
+  // Scroll-to-bottom button logic
+  var msgsEl = document.getElementById('messagesContainer');
+  var scrollBtn = document.getElementById('scrollBottomBtn');
+  var scrollBadge = document.getElementById('scrollBadge');
+  var pendingScrollCount = 0;
+
+  msgsEl.addEventListener('scroll', function() {
+    var distFromBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight;
+    if (distFromBottom > 200) {
+      scrollBtn.classList.add('show');
+    } else {
+      scrollBtn.classList.remove('show');
+      pendingScrollCount = 0;
+      scrollBadge.classList.remove('show');
+    }
+  });
+
   var myPresRef = db.ref('presence/' + myName);
   function heartbeat() { myPresRef.set({ ts: Date.now(), name: myName }); }
   heartbeat();
@@ -720,6 +750,16 @@ function startApp() {
     var isMe = data.sender === myName;
     if (document.getElementById('msg-' + key)) return;
     renderMessage(key, data, isMe);
+    // Show scroll badge if user is scrolled up
+    var msgsEl2 = document.getElementById('messagesContainer');
+    var distFromBottom = msgsEl2.scrollHeight - msgsEl2.scrollTop - msgsEl2.clientHeight;
+    if (!isMe && distFromBottom > 200) {
+      pendingScrollCount++;
+      var badge = document.getElementById('scrollBadge');
+      badge.textContent = pendingScrollCount;
+      badge.classList.add('show');
+      document.getElementById('scrollBottomBtn').classList.add('show');
+    }
     if (!isMe) {
       if (data.isPing) showNotifOverlay(data.sender);
       else notifyMsg(data.sender);
@@ -1495,6 +1535,14 @@ function startBlink(sender) {
     on = !on;
   }, 700);
 }
+function scrollToBottom() {
+  var msgsEl = document.getElementById('messagesContainer');
+  msgsEl.scrollTo({ top: msgsEl.scrollHeight, behavior: 'smooth' });
+  pendingScrollCount = 0;
+  document.getElementById('scrollBadge').classList.remove('show');
+  document.getElementById('scrollBottomBtn').classList.remove('show');
+}
+
 function clearBlink() { clearInterval(blinkInterval); blinkInterval = null; document.title = originalTitle; }
 function getTime() { var n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); }
 function pad(n) { return n.toString().padStart(2, '0'); }
