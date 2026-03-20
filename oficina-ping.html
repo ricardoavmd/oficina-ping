@@ -205,6 +205,42 @@ input[type="text"]:focus { border-color:var(--accent2); }
 .gif-item { border-radius:6px; overflow:hidden; cursor:pointer; aspect-ratio:1; }
 .gif-item img { width:100%; height:100%; object-fit:cover; display:block; }
 .gif-loading { padding:20px; text-align:center; font-size:12px; color:var(--muted); }
+
+/* LOAD MORE */
+.load-more-btn { display:none; margin:0 auto 8px; padding:6px 16px; background:var(--surface2); border:1px solid var(--border2); border-radius:20px; font-size:12px; color:var(--muted); cursor:pointer; -webkit-appearance:none; }
+.load-more-btn.show { display:block; }
+
+/* TAREAS */
+.tasks-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:998; align-items:flex-end; justify-content:center; }
+.tasks-overlay.show { display:flex; }
+.tasks-panel { background:var(--surface); border-radius:22px 22px 0 0; width:100%; max-width:500px; padding:1.2rem 1.2rem 2rem; max-height:80vh; display:flex; flex-direction:column; gap:10px; animation:slideUp 0.25s ease; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.tasks-header { display:flex; align-items:center; justify-content:space-between; }
+.tasks-title { font-size:15px; font-weight:600; color:var(--text); }
+.tasks-close { background:none; border:none; font-size:20px; color:var(--muted); cursor:pointer; }
+.tasks-input-row { display:flex; gap:8px; }
+.tasks-input { flex:1; padding:9px 12px; border:1.5px solid var(--border2); border-radius:10px; font-size:14px; font-family:var(--font-ui); background:var(--bg); color:var(--text); outline:none; -webkit-appearance:none; }
+.tasks-input:focus { border-color:var(--accent2); }
+.tasks-add-btn { padding:9px 14px; background:var(--accent2); color:#fff; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; -webkit-appearance:none; white-space:nowrap; }
+.tasks-list { overflow-y:auto; display:flex; flex-direction:column; gap:6px; flex:1; }
+.task-item { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--surface2); border-radius:10px; }
+.task-check { width:20px; height:20px; border-radius:50%; border:2px solid var(--border2); cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:12px; transition:background 0.15s; -webkit-appearance:none; background:none; }
+.task-check.done { background:var(--green); border-color:var(--green); color:#fff; }
+.task-text { flex:1; font-size:14px; color:var(--text); }
+.task-text.done { text-decoration:line-through; opacity:0.5; }
+.task-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:0 2px; }
+.task-author { font-size:10px; color:var(--muted2); margin-top:1px; }
+.tasks-empty { font-size:13px; color:var(--muted2); text-align:center; padding:20px; }
+.task-btn-header { width:30px; height:30px; border-radius:50%; background:var(--surface2); border:1px solid var(--border2); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; -webkit-appearance:none; }
+
+/* AUDIO SPEED */
+.audio-speed-btn { font-size:10px; font-weight:700; color:var(--muted); background:var(--surface2); border:1px solid var(--border2); border-radius:10px; padding:1px 5px; cursor:pointer; -webkit-appearance:none; flex-shrink:0; }
+.msg-row.me .audio-speed-btn { background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.3); color:rgba(255,255,255,0.8); }
+
+/* GIF TRENDING TABS */
+.gif-tabs { display:flex; gap:6px; padding:6px 10px 0; flex-shrink:0; }
+.gif-tab { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border2); background:var(--surface); color:var(--muted); -webkit-appearance:none; }
+.gif-tab.active { background:var(--accent2); color:#fff; border-color:var(--accent2); }
 </style>
 </head>
 <body>
@@ -253,6 +289,7 @@ input[type="text"]:focus { border-color:var(--accent2); }
         <div class="header-status" id="statusText">Conectando...</div>
       </div>
       <div class="unread-badge" id="unreadBadge">nuevo</div>
+      <button class="task-btn-header" id="taskHeaderBtn" title="Lista de tareas">✅</button>
       <button class="theme-btn" id="themeToggleBtn" title="Cambiar tema">🎨</button>
     </div>
 
@@ -277,6 +314,7 @@ input[type="text"]:focus { border-color:var(--accent2); }
       <span id="typingName"></span>
       <span class="typing-dots"><span></span><span></span><span></span></span>
     </div>
+    <button class="load-more-btn" id="loadMoreBtn">⬆ Cargar mensajes anteriores</button>
     <div class="messages" id="messagesContainer">
       <div class="empty-state" id="emptyState">Sin mensajes aún — ¡manda un Ping!</div>
     </div>
@@ -285,11 +323,15 @@ input[type="text"]:focus { border-color:var(--accent2); }
       <button class="reply-cancel" onclick="cancelReply()">✕</button>
     </div>
     <div class="gif-panel" id="gifPanel">
-      <div class="gif-search-bar">
+      <div class="gif-tabs">
+        <button class="gif-tab active" id="gifTabTrending" onclick="switchGifTab('trending')">🔥 Trending</button>
+        <button class="gif-tab" id="gifTabSearch" onclick="switchGifTab('search')">🔍 Buscar</button>
+      </div>
+      <div class="gif-search-bar" id="gifSearchBar" style="display:none;">
         <input class="gif-search-input" id="gifSearchInput" type="text" placeholder="Buscar GIFs..." autocomplete="off" />
         <button class="tool-btn" onclick="searchGifs()" style="flex-shrink:0;">🔍</button>
       </div>
-      <div class="gif-grid" id="gifGrid"><div class="gif-loading">Escribe algo para buscar GIFs 😄</div></div>
+      <div class="gif-grid" id="gifGrid"><div class="gif-loading">Cargando trending...</div></div>
     </div>
     <div class="sticker-panel" id="stickerPanel">
       <div class="sticker-panel-title">Stickers</div>
@@ -320,6 +362,21 @@ input[type="text"]:focus { border-color:var(--accent2); }
   </div>
 </div>
 
+<!-- TAREAS OVERLAY -->
+<div class="tasks-overlay" id="tasksOverlay" onclick="closeTasksIfOutside(event)">
+  <div class="tasks-panel" id="tasksPanel">
+    <div class="tasks-header">
+      <span class="tasks-title">✅ Lista de tareas</span>
+      <button class="tasks-close" onclick="closeTasks()">✕</button>
+    </div>
+    <div class="tasks-input-row">
+      <input class="tasks-input" id="taskInput" type="text" placeholder="Nueva tarea..." autocomplete="off" />
+      <button class="tasks-add-btn" onclick="addTask()">Agregar</button>
+    </div>
+    <div class="tasks-list" id="tasksList"><div class="tasks-empty">Sin tareas aún 🎉</div></div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
@@ -338,6 +395,14 @@ var THEMES = [
 ];
 
 var GIPHY_KEY = 'FxebxAp3BJvOScbXlWhixuqqQIQWIW1W';
+var MSGS_PER_PAGE = 40;
+var oldestMsgKey = null;
+var allMsgsLoaded = false;
+var currentAudio = null;
+var currentAudioKey = null;
+var audioSpeeds = [1, 1.5, 2];
+var audioSpeedIdx = 0;
+var currentGifTab = 'trending';
 var mediaRecorder = null;
 var audioChunks = [];
 var recTimerInterval = null;
@@ -426,8 +491,11 @@ document.getElementById('gifBtn').addEventListener('click', function() {
   var gp = document.getElementById('gifPanel');
   var sp = document.getElementById('stickerPanel');
   sp.classList.remove('show');
+  var wasHidden = !gp.classList.contains('show');
   gp.classList.toggle('show');
-  if (gp.classList.contains('show')) document.getElementById('gifSearchInput').focus();
+  if (wasHidden) {
+    switchGifTab('trending');
+  }
 });
 document.getElementById('gifSearchInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') searchGifs(); });
 
@@ -438,6 +506,12 @@ voiceBtn.addEventListener('touchstart', function(e) { e.preventDefault(); startR
 voiceBtn.addEventListener('mouseup', stopRecording);
 voiceBtn.addEventListener('mouseleave', stopRecording);
 voiceBtn.addEventListener('touchend', function(e) { e.preventDefault(); stopRecording(); }, { passive: false });
+document.getElementById('taskHeaderBtn').addEventListener('click', function() {
+  document.getElementById('tasksOverlay').classList.add('show');
+  document.getElementById('taskInput').focus();
+});
+document.getElementById('taskInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') addTask(); });
+document.getElementById('loadMoreBtn').addEventListener('click', loadMoreMsgs);
 document.getElementById('themeToggleBtn').addEventListener('click', function() {
   document.getElementById('themePanel').classList.toggle('show');
 });
@@ -462,6 +536,9 @@ document.addEventListener('click', function(e) {
   }
   if (!e.target.closest('.gif-panel') && !e.target.closest('#gifBtn')) {
     document.getElementById('gifPanel').classList.remove('show');
+  }
+  if (!e.target.closest('.tasks-panel') && !e.target.closest('#taskHeaderBtn')) {
+    // handled by closeTasksIfOutside
   }
   if (!e.target.closest('.theme-panel') && !e.target.closest('#themeToggleBtn')) {
     document.getElementById('themePanel').classList.remove('show');
@@ -490,6 +567,7 @@ function startApp() {
     Notification.requestPermission();
   }
 
+  setupTasks();
   var myPresRef = db.ref('presence/' + myName);
   function heartbeat() { myPresRef.set({ ts: Date.now(), name: myName }); }
   heartbeat();
@@ -552,12 +630,28 @@ function startApp() {
       : 'Esperando a otros...';
   });
 
-  db.ref('msgs').on('child_added', function(snap) {
+  // Load last MSGS_PER_PAGE messages
+  db.ref('msgs').orderByKey().limitToLast(MSGS_PER_PAGE).once('value', function(snap) {
+    var all = snap.val() || {};
+    var keys = Object.keys(all).sort();
+    if (keys.length > 0) oldestMsgKey = keys[0];
+    if (keys.length < MSGS_PER_PAGE) allMsgsLoaded = true;
+    else document.getElementById('loadMoreBtn').classList.add('show');
+    keys.forEach(function(key) {
+      var data = all[key];
+      if (!data || !data.sender) return;
+      renderMessage(key, data, data.sender === myName);
+    });
+  });
+
+  // Listen for new messages only
+  db.ref('msgs').orderByKey().limitToLast(1).on('child_added', function(snap) {
     var data = snap.val();
     var key = snap.key;
     if (!data || !data.sender || !data.ts) return;
-    if (data.ts < startTs - 5000) return;
+    if (data.ts < startTs - 2000) return;
     var isMe = data.sender === myName;
+    if (document.getElementById('msg-' + key)) return;
     renderMessage(key, data, isMe);
     if (!isMe) {
       if (data.isPing) showNotifOverlay(data.sender);
@@ -596,11 +690,12 @@ function renderMessage(key, data, isMe) {
       bars += '<span style="height:' + h + 'px" data-idx="' + b + '"></span>';
     }
     bubbleContent = '<div class="audio-bubble">' +
-      '<button class="audio-play-btn" onclick="playAudio(\'' + data.url + '\',this)">' +
+      '<button class="audio-play-btn" id="play-' + key + '" onclick="playAudio(\'' + data.url + '\',\'' + key + '\')">' +
         '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>' +
       '</button>' +
       '<div class="audio-waveform" id="wave-' + key + '">' + bars + '</div>' +
       '<span class="audio-duration" id="dur-' + key + '">' + dur + '</span>' +
+      '<button class="audio-speed-btn" id="speed-' + key + '" onclick="toggleSpeed(\'' + key + '\')">1x</button>' +
     '</div>';
   } else if (data.type === 'sticker') {
     bubbleContent = '<span style="font-size:48px;line-height:1;">' + esc(data.text) + '</span>';
@@ -837,32 +932,56 @@ function uploadAndSendAudio(blob, duration) {
   reader.readAsDataURL(blob);
 }
 
-function playAudio(url, btn) {
-  // Stop any currently playing
-  document.querySelectorAll('.audio-playing').forEach(function(a) { a.pause(); a.currentTime = 0; });
-  document.querySelectorAll('.audio-play-btn').forEach(function(b) {
-    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>';
-  });
-  var audio = new Audio(url);
-  audio.classList && audio.classList.add('audio-playing');
-  // Find the key from the waveform sibling
-  var waveEl = btn.nextElementSibling;
-  var durEl = waveEl ? waveEl.nextElementSibling : null;
+function playAudio(url, key) {
+  var btn = document.getElementById('play-' + key);
+  var waveEl = document.getElementById('wave-' + key);
+  var durEl = document.getElementById('dur-' + key);
+
+  // If same audio playing, pause it
+  if (currentAudio && currentAudioKey === key && !currentAudio.paused) {
+    currentAudio.pause();
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>';
+    return;
+  }
+  // Stop any other audio
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    if (currentAudioKey) {
+      var prevBtn = document.getElementById('play-' + currentAudioKey);
+      if (prevBtn) prevBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>';
+      var prevWave = document.getElementById('wave-' + currentAudioKey);
+      if (prevWave) prevWave.querySelectorAll('span').forEach(function(s){s.classList.remove('active');});
+    }
+  }
+
+  currentAudio = new Audio(url);
+  currentAudioKey = key;
+  currentAudio.playbackRate = audioSpeeds[audioSpeedIdx];
   btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" rx="1" fill="white"/><rect x="14" y="4" width="4" height="16" rx="1" fill="white"/></svg>';
-  audio.play();
-  // Animate waveform
+  currentAudio.play();
+
   var bars = waveEl ? waveEl.querySelectorAll('span') : [];
   var barCount = bars.length;
-  audio.addEventListener('timeupdate', function() {
-    var pct = audio.duration ? audio.currentTime / audio.duration : 0;
+  currentAudio.addEventListener('timeupdate', function() {
+    var pct = currentAudio.duration ? currentAudio.currentTime / currentAudio.duration : 0;
     var activeIdx = Math.floor(pct * barCount);
     bars.forEach(function(bar, idx) { bar.classList.toggle('active', idx <= activeIdx); });
-    if (durEl) durEl.textContent = formatDuration(Math.floor(audio.currentTime));
+    if (durEl) durEl.textContent = formatDuration(Math.floor(currentAudio.currentTime));
   });
-  audio.addEventListener('ended', function() {
+  currentAudio.addEventListener('ended', function() {
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>';
     bars.forEach(function(bar) { bar.classList.remove('active'); });
+    currentAudio = null; currentAudioKey = null;
   });
+}
+
+function toggleSpeed(key) {
+  audioSpeedIdx = (audioSpeedIdx + 1) % audioSpeeds.length;
+  var speed = audioSpeeds[audioSpeedIdx];
+  var speedBtn = document.getElementById('speed-' + key);
+  if (speedBtn) speedBtn.textContent = speed + 'x';
+  if (currentAudio && currentAudioKey === key) currentAudio.playbackRate = speed;
 }
 
 function formatDuration(secs) {
@@ -937,44 +1056,203 @@ function scrollToPinned() {
   if (pinnedKey) scrollToMsg(pinnedKey);
 }
 
+function switchGifTab(tab) {
+  currentGifTab = tab;
+  document.getElementById('gifTabTrending').classList.toggle('active', tab === 'trending');
+  document.getElementById('gifTabSearch').classList.toggle('active', tab === 'search');
+  document.getElementById('gifSearchBar').style.display = tab === 'search' ? 'flex' : 'none';
+  if (tab === 'trending') loadTrendingGifs();
+  else document.getElementById('gifSearchInput').focus();
+}
+
+function loadTrendingGifs() {
+  var grid = document.getElementById('gifGrid');
+  grid.innerHTML = '<div class="gif-loading">Cargando trending...</div>';
+  fetch('https://g.tenor.com/v1/trending?key=LIVDSRZULELA&limit=12&contentfilter=medium&media_filter=minimal')
+    .then(function(r) { return r.json(); })
+    .then(function(json) { renderGifResults(json.results || []); })
+    .catch(function() { grid.innerHTML = '<div class="gif-loading">Error cargando GIFs 😕</div>'; });
+}
+
 function searchGifs() {
   var q = document.getElementById('gifSearchInput').value.trim();
   if (!q) return;
   var grid = document.getElementById('gifGrid');
   grid.innerHTML = '<div class="gif-loading">Buscando...</div>';
-
-  // Usar Giphy con fetch y modo no-cors como imagen directa via proxy público
-  // Alternativa: construir URLs de Tenor embed sin API
-  // Tenor permite buscar via su web embed que tiene CORS abierto
-  var url = 'https://g.tenor.com/v1/search?q=' + encodeURIComponent(q) + '&key=LIVDSRZULELA&limit=12&contentfilter=medium&media_filter=minimal';
-  fetch(url)
+  fetch('https://g.tenor.com/v1/search?q=' + encodeURIComponent(q) + '&key=LIVDSRZULELA&limit=12&contentfilter=medium&media_filter=minimal')
     .then(function(r) { return r.json(); })
     .then(function(json) {
-      grid.innerHTML = '';
       if (!json.results || json.results.length === 0) {
         grid.innerHTML = '<div class="gif-loading">Sin resultados 😅</div>';
         return;
       }
-      json.results.forEach(function(gif) {
-        var preview = gif.media[0].tinygif ? gif.media[0].tinygif.url : gif.media[0].gif.url;
-        var full = gif.media[0].gif.url;
-        var el = document.createElement('div');
-        el.className = 'gif-item';
-        var img = document.createElement('img');
-        img.src = preview;
-        img.loading = 'lazy';
-        el.appendChild(img);
-        el.addEventListener('click', function() { sendGif(full); });
-        grid.appendChild(el);
-      });
+      renderGifResults(json.results);
     })
-    .catch(function(err) {
-      // Si Tenor falla, mostrar links directos a Giphy para copiar
+    .catch(function() {
       grid.innerHTML = '<div class="gif-loading" style="padding:12px;text-align:center;">' +
-        '<div style="margin-bottom:8px;">Busca en <a href="https://giphy.com/search/' + encodeURIComponent(q) + '" target="_blank" style="color:var(--accent2)">Giphy.com</a></div>' +
-        '<div style="font-size:11px;color:var(--muted2)">Copia la URL del GIF y pégala en el chat</div>' +
+        '<div style="margin-bottom:8px;">Busca en <a href="https://giphy.com/search/' + encodeURIComponent(document.getElementById('gifSearchInput').value) + '" target="_blank" style="color:var(--accent2)">Giphy.com</a></div>' +
+        '<div style="font-size:11px;color:var(--muted2)">Pega la URL del GIF en el chat</div>' +
       '</div>';
     });
+}
+
+function renderGifResults(results) {
+  var grid = document.getElementById('gifGrid');
+  grid.innerHTML = '';
+  results.forEach(function(gif) {
+    var preview = gif.media[0].tinygif ? gif.media[0].tinygif.url : gif.media[0].gif.url;
+    var full = gif.media[0].gif ? gif.media[0].gif.url : preview;
+    var el = document.createElement('div');
+    el.className = 'gif-item';
+    var img = document.createElement('img');
+    img.src = preview;
+    img.loading = 'lazy';
+    el.appendChild(img);
+    el.addEventListener('click', function() { sendGif(full); });
+    grid.appendChild(el);
+  });
+}
+
+function loadMoreMsgs() {
+  if (allMsgsLoaded || !oldestMsgKey) return;
+  var btn = document.getElementById('loadMoreBtn');
+  btn.textContent = 'Cargando...';
+  db.ref('msgs').orderByKey().endBefore(oldestMsgKey).limitToLast(MSGS_PER_PAGE).once('value', function(snap) {
+    var all = snap.val() || {};
+    var keys = Object.keys(all).sort();
+    if (keys.length === 0 || keys.length < MSGS_PER_PAGE) {
+      allMsgsLoaded = true;
+      btn.classList.remove('show');
+    } else {
+      btn.textContent = '⬆ Cargar mensajes anteriores';
+    }
+    if (keys.length > 0) oldestMsgKey = keys[0];
+    var container = document.getElementById('messagesContainer');
+    var prevScrollHeight = container.scrollHeight;
+    // Insert at top in order
+    var fragment = document.createDocumentFragment();
+    keys.forEach(function(key) {
+      var data = all[key];
+      if (!data || !data.sender || document.getElementById('msg-' + key)) return;
+      var tempDiv = document.createElement('div');
+      var row = document.createElement('div');
+      row.className = 'msg-row ' + (data.sender === myName ? 'me' : 'them');
+      row.id = 'msg-' + key;
+      row.dataset.sender = data.sender;
+      row.style.animation = 'none';
+      fragment.appendChild(row);
+    });
+    var firstChild = container.firstChild;
+    container.insertBefore(fragment, firstChild);
+    // Now render content into each row (reuse renderMessage logic)
+    keys.forEach(function(key) {
+      var data = all[key];
+      if (!data || !data.sender) return;
+      var existingRow = document.getElementById('msg-' + key);
+      if (existingRow && existingRow.children.length === 0) {
+        renderMessageIntoRow(existingRow, key, data, data.sender === myName);
+      }
+    });
+    // Preserve scroll position
+    container.scrollTop = container.scrollHeight - prevScrollHeight;
+  });
+}
+
+function renderMessageIntoRow(row, key, data, isMe) {
+  var bubbleContent = '';
+  var bubbleClass = 'bubble';
+  if (data.type === 'image') {
+    bubbleContent = '<img src="' + data.url + '" alt="imagen" onclick="openLightbox(\'' + data.url + '\')" />';
+  } else if (data.type === 'audio') {
+    var dur = data.duration ? formatDuration(data.duration) : '0:00';
+    var bars = '';
+    var heights = data.waveform || [];
+    for (var b = 0; b < 20; b++) {
+      var h = heights[b] ? Math.max(4, Math.round(heights[b] * 26)) : Math.round(4 + Math.random() * 22);
+      bars += '<span style="height:' + h + 'px"></span>';
+    }
+    bubbleContent = '<div class="audio-bubble">' +
+      '<button class="audio-play-btn" id="play-' + key + '" onclick="playAudio(\'' + data.url + '\',\'' + key + '\')">' +
+        '<svg viewBox="0 0 24 24" fill="none"><path d="M5 3l14 9-14 9V3z" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/></svg>' +
+      '</button>' +
+      '<div class="audio-waveform" id="wave-' + key + '">' + bars + '</div>' +
+      '<span class="audio-duration" id="dur-' + key + '">' + dur + '</span>' +
+      '<button class="audio-speed-btn" id="speed-' + key + '" onclick="toggleSpeed(\'' + key + '\')">1x</button>' +
+    '</div>';
+  } else if (data.type === 'sticker') {
+    bubbleContent = '<span style="font-size:48px;line-height:1;">' + esc(data.text) + '</span>';
+    bubbleClass = 'bubble sticker';
+  } else {
+    bubbleContent = formatText(data.text || '');
+  }
+  var replyQuoteHtml = '';
+  if (data.replyTo) {
+    var qt = data.replyTo.type === 'image' ? '📷 Imagen' : esc(data.replyTo.text || '');
+    replyQuoteHtml = '<div class="reply-quote" onclick="scrollToMsg(\'' + data.replyTo.key + '\')">' +
+      '<div class="reply-quote-sender">' + esc(data.replyTo.sender) + '</div>' +
+      '<div class="reply-quote-text">' + qt + '</div></div>';
+  }
+  var actionsHtml = '<div class="msg-row-actions">' +
+    '<button class="action-btn" onclick="startReply(\'' + key + '\',event)">↩ Responder</button>' +
+    (data.type === 'text' ? '<button class="action-btn" onclick="pinMessage(\'' + key + '\',event)">📌 Fijar</button>' : '') +
+  '</div>';
+  var pickerHtml = '<div class="reaction-picker" id="picker-' + key + '">' +
+    REACTIONS.map(function(r) { return '<span class="r-opt" onclick="addReaction(\'' + key + '\',\'' + r + '\',event)">' + r + '</span>'; }).join('') + '</div>';
+  row.innerHTML =
+    '<div class="msg-avatar">' + esc(data.sender[0].toUpperCase()) + '</div>' +
+    '<div class="bubble-wrap">' +
+      actionsHtml +
+      '<div class="' + bubbleClass + '" style="position:relative;" onclick="toggleReactionPicker(\'' + key + '\',event)">' +
+        replyQuoteHtml + bubbleContent + '<span class="time">' + esc(data.timeStr || '') + '</span>' + pickerHtml +
+      '</div>' +
+      '<div class="reactions-row" id="reactions-' + key + '"></div>' +
+    '</div>';
+}
+
+// TASK FUNCTIONS
+function closeTasks() { document.getElementById('tasksOverlay').classList.remove('show'); }
+function closeTasksIfOutside(e) { if (e.target === document.getElementById('tasksOverlay')) closeTasks(); }
+
+function addTask() {
+  var input = document.getElementById('taskInput');
+  var text = input.value.trim();
+  if (!text || !myName) return;
+  var key = db.ref('tasks').push().key;
+  db.ref('tasks/' + key).set({ text: text, done: false, author: myName, ts: Date.now() });
+  input.value = '';
+}
+
+function setupTasks() {
+  db.ref('tasks').on('value', function(snap) {
+    var all = snap.val() || {};
+    var list = document.getElementById('tasksList');
+    var keys = Object.keys(all).sort(function(a,b) { return all[a].ts - all[b].ts; });
+    list.innerHTML = '';
+    if (keys.length === 0) { list.innerHTML = '<div class="tasks-empty">Sin tareas aún 🎉</div>'; return; }
+    keys.forEach(function(key) {
+      var t = all[key];
+      var item = document.createElement('div');
+      item.className = 'task-item';
+      item.innerHTML =
+        '<button class="task-check' + (t.done ? ' done' : '') + '" onclick="toggleTask(\'' + key + '\')">' + (t.done ? '✓' : '') + '</button>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div class="task-text' + (t.done ? ' done' : '') + '">' + esc(t.text) + '</div>' +
+          '<div class="task-author">' + esc(t.author) + '</div>' +
+        '</div>' +
+        '<button class="task-del" onclick="deleteTask(\'' + key + '\')">✕</button>';
+      list.appendChild(item);
+    });
+  });
+}
+
+function toggleTask(key) {
+  db.ref('tasks/' + key + '/done').once('value').then(function(snap) {
+    db.ref('tasks/' + key + '/done').set(!snap.val());
+  });
+}
+
+function deleteTask(key) {
+  db.ref('tasks/' + key).remove();
 }
 
 function sendGif(url) {
