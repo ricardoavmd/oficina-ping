@@ -1038,20 +1038,24 @@ function uploadAndSendAudio(blob, duration) {
   progress.textContent = 'Enviando audio...';
   progress.classList.add('show');
 
-  // Convert blob to base64 and store directly in Firebase (for short audios < 1MB)
-  var reader = new FileReader();
-  reader.onloadend = function() {
-    var base64 = reader.result; // data:audio/webm;base64,...
+  var formData = new FormData();
+  formData.append('file', blob, 'voice.webm');
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+  formData.append('resource_type', 'video');
+
+  fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/video/upload', {
+    method: 'POST',
+    body: formData
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(json) {
+    if (!json.secure_url) throw new Error('Sin URL');
     var wv = [];
     for (var i = 0; i < 20; i++) wv.push(Math.random());
-    pushMsg({ sender: myName, text: '', url: base64, duration: duration, waveform: wv, timeStr: getTime(), ts: Date.now(), type: 'audio', isPing: false });
-    progress.classList.remove('show');
-  };
-  reader.onerror = function() {
-    alert('Error al procesar el audio.');
-    progress.classList.remove('show');
-  };
-  reader.readAsDataURL(blob);
+    pushMsg({ sender: myName, text: '', url: json.secure_url, duration: duration, waveform: wv, timeStr: getTime(), ts: Date.now(), type: 'audio', isPing: false });
+  })
+  .catch(function() { alert('Error al enviar el audio. Intenta de nuevo.'); })
+  .finally(function() { progress.classList.remove('show'); });
 }
 
 function playAudio(url, key) {
