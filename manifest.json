@@ -1,0 +1,26 @@
+{
+  "name": "Ping Oficina",
+  "short_name": "Ping",
+  "description": "Chat de oficina en tiempo real",
+  "start_url": "/oficina-ping/oficina-ping.html",
+  "display": "standalone",
+  "background_color": "#f5f4f0",
+  "theme_color": "#2c3e50",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232c3e50'/><path d='M38 58h116v74a12 12 0 01-12 12H50a12 12 0 01-12-12V58z' stroke='white' stroke-width='10' fill='none'/><path d='M38 58l58 52 58-52' stroke='white' stroke-width='10' fill='none'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%232c3e50'/><path d='M90 148h332v210a32 32 0 01-32 32H122a32 32 0 01-32-32V148z' stroke='white' stroke-width='24' fill='none'/><path d='M90 148l166 148 166-148' stroke='white' stroke-width='24' fill='none'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "es"
+}
