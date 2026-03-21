@@ -357,6 +357,40 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .auth-divider-text { font-size:12px; color:#b8aed4; }
 /* passwords are hashed with SHA-256 */
 
+/* SIDEBAR */
+.sidebar { display:none; width:220px; flex-shrink:0; background:rgba(255,255,255,0.6); backdrop-filter:blur(16px); border-right:1px solid var(--border,rgba(168,85,247,0.15)); flex-direction:column; height:100%; transition:background 0.4s; }
+.sidebar.visible { display:flex; }
+.sidebar-header { padding:14px 12px 10px; display:flex; align-items:center; gap:8px; border-bottom:1px solid var(--border,rgba(168,85,247,0.1)); }
+.sidebar-avatar { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,var(--bubble-me-grad,#e879f9,#60a5fa)); display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff; font-weight:700; flex-shrink:0; }
+.sidebar-username { font-size:13px; font-weight:700; color:var(--text,#1e1b4b); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sidebar-section { padding:10px 12px 4px; font-size:10px; font-weight:700; color:var(--muted,#9d86c8); text-transform:uppercase; letter-spacing:0.8px; display:flex; align-items:center; justify-content:space-between; }
+.sidebar-add-btn { background:none; border:none; color:var(--muted,#9d86c8); cursor:pointer; font-size:16px; line-height:1; padding:0; -webkit-appearance:none; }
+.sidebar-item { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; border-radius:10px; margin:1px 6px; transition:background 0.15s; }
+.sidebar-item:hover { background:rgba(168,85,247,0.07); }
+.sidebar-item.active { background:rgba(168,85,247,0.12); }
+.sidebar-item-icon { font-size:15px; flex-shrink:0; width:20px; text-align:center; }
+.sidebar-item-name { font-size:13px; color:var(--text,#1e1b4b); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sidebar-item-badge { background:var(--accent,#f15bb5); color:#fff; font-size:10px; font-weight:700; min-width:18px; height:18px; border-radius:20px; display:none; align-items:center; justify-content:center; padding:0 4px; flex-shrink:0; }
+.sidebar-item-badge.show { display:flex; }
+.sidebar-item-online { width:8px; height:8px; border-radius:50%; background:#bbb; flex-shrink:0; }
+.sidebar-item-online.on { background:var(--green,#10b981); }
+.sidebar-divider { height:1px; background:var(--border,rgba(168,85,247,0.1)); margin:6px 12px; }
+
+/* MAIN CHAT AREA */
+.chat-main { display:flex; flex:1; min-width:0; flex-direction:column; height:100%; }
+
+/* CREATE CHANNEL MODAL */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(30,27,75,0.4); backdrop-filter:blur(4px); z-index:500; align-items:center; justify-content:center; }
+.modal-overlay.show { display:flex; }
+.modal-card { background:var(--surface,rgba(255,255,255,0.95)); border-radius:20px; padding:1.5rem; width:90%; max-width:340px; display:flex; flex-direction:column; gap:12px; border:1px solid var(--border2,rgba(168,85,247,0.2)); box-shadow:0 8px 40px rgba(168,85,247,0.2); animation:popIn 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+.modal-title { font-size:16px; font-weight:700; color:var(--text,#1e1b4b); }
+.modal-input { width:100%; padding:10px 13px; border:1.5px solid var(--border2,rgba(168,85,247,0.2)); border-radius:12px; font-size:14px; font-family:var(--font-ui); background:var(--input-bg,rgba(255,255,255,0.8)); color:var(--text,#1e1b4b); outline:none; -webkit-appearance:none; }
+.modal-input:focus { border-color:var(--accent2-solid,#a855f7); }
+.modal-btn-row { display:flex; gap:8px; }
+.modal-btn { flex:1; padding:10px; border:none; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer; -webkit-appearance:none; }
+.modal-btn-primary { background:linear-gradient(135deg,var(--bubble-me-grad,#e879f9,#60a5fa)); color:#fff; }
+.modal-btn-cancel { background:var(--surface2,rgba(255,255,255,0.7)); color:var(--muted,#9d86c8); border:1px solid var(--border2,rgba(168,85,247,0.2)); }
+
 /* GIF TRENDING TABS */
 .gif-tabs { display:flex; gap:6px; padding:6px 10px 0; flex-shrink:0; }
 .gif-tab { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border2,rgba(168,85,247,0.2)); background:var(--surface2,rgba(255,255,255,0.7)); color:var(--muted,#9d86c8); -webkit-appearance:none; }
@@ -437,10 +471,6 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
         <div class="auth-label">Respuesta de seguridad</div>
         <input class="auth-input" id="regAnswer" type="text" placeholder="Tu respuesta (guárdala bien)" autocomplete="off" />
       </div>
-      <div class="auth-field">
-        <div class="auth-label">Elige tu tema</div>
-        <div class="theme-swatches" id="setupSwatches" style="justify-content:flex-start;"></div>
-      </div>
       <div class="auth-error" id="registerError"></div>
       <div class="auth-success" id="registerSuccess"></div>
       <button class="auth-btn" id="registerBtn">Crear cuenta</button>
@@ -503,11 +533,32 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
   </div>
 
   <!-- CHAT -->
-  <div class="chat-screen" id="chatScreen">
+  <div class="chat-screen" id="chatScreen" style="flex-direction:row;">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-avatar" id="sidebarAvatar">?</div>
+        <div class="sidebar-username" id="sidebarUsername">—</div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:6px 0;">
+        <div class="sidebar-section">
+          Canales
+          <button class="sidebar-add-btn" onclick="openCreateChannel()" title="Nuevo canal">＋</button>
+        </div>
+        <div id="channelsList"></div>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section">Mensajes directos</div>
+        <div id="dmsList"></div>
+      </div>
+    </div>
+
+    <!-- MAIN CHAT -->
+    <div class="chat-main">
     <div class="header">
+      <button class="theme-btn" id="sidebarToggleBtn" title="Canales" style="font-size:16px;">☰</button>
       <div class="header-avatar" id="myAvatarDisplay">?</div>
       <div class="header-info">
-        <div class="header-name">Ping — Oficina</div>
+        <div class="header-name" id="chatTitle">Ping — Oficina</div>
         <div class="header-status" id="statusText">Conectando...</div>
       </div>
       <div class="unread-badge" id="unreadBadge">nuevo</div>
@@ -537,7 +588,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <div class="presence-label">Online:</div>
       <div class="presence-chips" id="presenceChips"><span style="font-size:12px;color:var(--muted2)">Esperando...</span></div>
     </div>
-    <div class="ping-bar">
+    <div class="ping-bar" id="pingBar">
       <button class="btn-ping" id="pingBtn"><div class="ping-dot"></div> Enviar PING a todos</button>
     </div>
     <div class="typing-bar" id="typingBar">
@@ -618,6 +669,19 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <input type="file" id="fileInput" accept="image/*" />
       <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" />
     </div>
+    </div><!-- end chat-main -->
+  </div>
+</div>
+
+<!-- CREATE CHANNEL MODAL -->
+<div class="modal-overlay" id="createChannelModal">
+  <div class="modal-card">
+    <div class="modal-title">Nuevo canal</div>
+    <input class="modal-input" id="newChannelName" type="text" placeholder="nombre-del-canal" autocomplete="off" maxlength="30" />
+    <div class="modal-btn-row">
+      <button class="modal-btn modal-btn-cancel" onclick="closeCreateChannel()">Cancelar</button>
+      <button class="modal-btn modal-btn-primary" onclick="createChannel()">Crear</button>
+    </div>
   </div>
 </div>
 
@@ -697,6 +761,11 @@ var SECURITY_QUESTIONS = {
   'comida': '¿Cuál es tu comida favorita?'
 };
 var MSGS_PER_PAGE = 40;
+var currentChannel = 'general';
+var currentChannelType = 'channel'; // 'channel' or 'dm'
+var channelListeners = {};
+var dmPartner = null;
+var onlineUsers = {};
 var oldestMsgKey = null;
 var allMsgsLoaded = false;
 var currentAudio = null;
@@ -783,7 +852,6 @@ function buildSwatches(container, cls) {
   });
 }
 
-buildSwatches(document.getElementById('setupSwatches'), 'swatch');
 buildSwatches(document.getElementById('themeSwatchesLogin'), 'swatch');
 buildSwatches(document.getElementById('themeOptions'), 'theme-opt');
 applyTheme(currentTheme);
@@ -847,6 +915,10 @@ voiceBtn.addEventListener('mouseup', stopRecording);
 voiceBtn.addEventListener('mouseleave', stopRecording);
 voiceBtn.addEventListener('touchend', function(e) { e.preventDefault(); stopRecording(); }, { passive: false });
 document.getElementById('taskInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') addTask(); });
+document.getElementById('sidebarToggleBtn').addEventListener('click', function() {
+  document.getElementById('sidebar').classList.toggle('visible');
+});
+document.getElementById('newChannelName').addEventListener('keydown', function(e) { if (e.key === 'Enter') createChannel(); });
 document.getElementById('loadMoreBtn').addEventListener('click', loadMoreMsgs);
 
 // Header menu
@@ -1059,6 +1131,15 @@ function startApp() {
   document.getElementById('chatScreen').classList.add('visible');
   document.getElementById('myAvatarDisplay').textContent = myName[0].toUpperCase();
   document.getElementById('statusText').textContent = 'Conectado como ' + myName;
+  document.getElementById('sidebarAvatar').textContent = myName[0].toUpperCase();
+  document.getElementById('sidebarUsername').textContent = myName;
+  document.getElementById('sidebar').classList.add('visible');
+  // Ensure general channel exists
+  db.ref('channels/general').once('value').then(function(snap) {
+    if (!snap.exists()) db.ref('channels/general').set({ name: 'general', createdAt: Date.now(), createdBy: myName });
+  });
+  loadSidebar();
+  switchChannel('general', 'channel');
 
   // Solicitar permiso de notificaciones del sistema
   if ('Notification' in window && Notification.permission === 'default') {
@@ -1110,7 +1191,7 @@ function startApp() {
   });
 
   // Pinned message
-  db.ref('pinned').on('value', function(snap) {
+  db.ref('channels/general/pinned').on('value', function(snap) {
     var data = snap.val();
     var bar = document.getElementById('pinnedBar');
     if (data && data.text) {
@@ -1145,65 +1226,7 @@ function startApp() {
       : 'Esperando a otros...';
   });
 
-  // Load last MSGS_PER_PAGE messages
-  db.ref('msgs').orderByKey().limitToLast(MSGS_PER_PAGE).once('value', function(snap) {
-    var all = snap.val() || {};
-    var keys = Object.keys(all).sort();
-    if (keys.length > 0) oldestMsgKey = keys[0];
-    if (keys.length < MSGS_PER_PAGE) allMsgsLoaded = true;
-    else document.getElementById('loadMoreBtn').classList.add('show');
-    keys.forEach(function(key) {
-      var data = all[key];
-      if (!data || !data.sender) return;
-      renderMessage(key, data, data.sender === myName);
-    });
-  });
-
-  // Listen for new messages only
-  db.ref('msgs').orderByKey().limitToLast(1).on('child_added', function(snap) {
-    var data = snap.val();
-    var key = snap.key;
-    if (!data || !data.sender || !data.ts) return;
-    if (data.ts < startTs - 2000) return;
-    var isMe = data.sender === myName;
-    if (document.getElementById('msg-' + key)) return;
-    renderMessage(key, data, isMe);
-    // Show scroll badge if user is scrolled up
-    var msgsEl2 = document.getElementById('messagesContainer');
-    var distFromBottom = msgsEl2.scrollHeight - msgsEl2.scrollTop - msgsEl2.clientHeight;
-    if (!isMe && distFromBottom > 200) {
-      pendingScrollCount++;
-      var badge = document.getElementById('scrollBadge');
-      badge.textContent = pendingScrollCount;
-      badge.classList.add('show');
-      document.getElementById('scrollBottomBtn').classList.add('show');
-    }
-    if (!isMe) {
-      if (data.isPing) showNotifOverlay(data.sender);
-      else notifyMsg(data.sender);
-    }
-  });
-
-  db.ref('msgs').on('value', function(snap) {
-    var all = snap.val() || {};
-    Object.keys(all).forEach(function(key) {
-      if (all[key] && all[key].reactions) updateReactionsUI(key, all[key].reactions);
-      // Apply edits to rendered messages
-      if (all[key] && all[key].edited) {
-        var bubbleEl = document.querySelector('#msg-' + key + ' .bubble');
-        if (bubbleEl && all[key].type === 'text') {
-          var inner = formatText(all[key].text || '') + '<span class="edited-tag">(editado)</span>';
-          var timeEl = bubbleEl.querySelector('.time');
-          var pickerEl = bubbleEl.querySelector('.reaction-picker');
-          var replyEl = bubbleEl.querySelector('.reply-quote');
-          var timeHtml = timeEl ? timeEl.outerHTML : '';
-          var pickerHtml = pickerEl ? pickerEl.outerHTML : '';
-          var replyHtml = replyEl ? replyEl.outerHTML : '';
-          bubbleEl.innerHTML = replyHtml + inner + timeHtml + pickerHtml;
-        }
-      }
-    });
-  });
+  // Messages are now loaded per-channel via switchChannel()
 }
 
 function renderMessage(key, data, isMe) {
@@ -1284,7 +1307,7 @@ function addReaction(key, emoji, e) {
   e.stopPropagation();
   var picker = document.getElementById('picker-' + key);
   if (picker) picker.classList.remove('show');
-  var reactRef = db.ref('msgs/' + key + '/reactions/' + emoji);
+  var reactRef = getMsgsRef().child(key + '/reactions/' + emoji);
   reactRef.once('value').then(function(snap) {
     var current = snap.val() || {};
     if (current[myName]) { delete current[myName]; reactRef.set(Object.keys(current).length ? current : null); }
@@ -1535,8 +1558,20 @@ function formatDuration(secs) {
   return m + ':' + (s < 10 ? '0' : '') + s;
 }
 
+function getMsgsRef() {
+  if (currentChannelType === 'dm') {
+    var dmKey = getDmKey(myName, dmPartner);
+    return db.ref('dms/' + dmKey + '/msgs');
+  }
+  return db.ref('channels/' + currentChannel + '/msgs');
+}
+
+function getDmKey(a, b) {
+  return [a.toLowerCase(), b.toLowerCase()].sort().join('__');
+}
+
 function pushMsg(data) {
-  var newRef = db.ref('msgs').push();
+  var newRef = getMsgsRef().push();
   newRef.set(data);
   renderMessage(newRef.key, data, true);
 }
@@ -1612,9 +1647,11 @@ function pinMessage(key, e) {
   var text = bubbleEl ? bubbleEl.childNodes[0] && bubbleEl.childNodes[0].nodeType === 3 ? bubbleEl.childNodes[0].textContent.trim() : bubbleEl.textContent.replace(/[0-9]{1,2}:[0-9]{2}/,'').trim() : '';
   var sender = msgEl.dataset.sender || '';
   if (pinnedKey === key) {
-    db.ref('pinned').remove();
+    var pinnedPath = currentChannelType === 'dm' ? 'dms/' + getDmKey(myName, dmPartner) + '/pinned' : 'channels/' + currentChannel + '/pinned';
+    db.ref(pinnedPath).remove();
   } else {
-    db.ref('pinned').set({ key: key, text: text.substring(0,80), sender: sender, ts: Date.now() });
+    var pinnedPath = currentChannelType === 'dm' ? 'dms/' + getDmKey(myName, dmPartner) + '/pinned' : 'channels/' + currentChannel + '/pinned';
+  db.ref(pinnedPath).set({ key: key, text: text.substring(0,80), sender: sender, ts: Date.now() });
   }
 }
 
@@ -1683,7 +1720,7 @@ function loadMoreMsgs() {
   if (allMsgsLoaded || !oldestMsgKey) return;
   var btn = document.getElementById('loadMoreBtn');
   btn.textContent = 'Cargando...';
-  db.ref('msgs').orderByKey().endBefore(oldestMsgKey).limitToLast(MSGS_PER_PAGE).once('value', function(snap) {
+  getMsgsRef().orderByKey().endBefore(oldestMsgKey).limitToLast(MSGS_PER_PAGE).once('value', function(snap) {
     var all = snap.val() || {};
     var keys = Object.keys(all).sort();
     if (keys.length === 0 || keys.length < MSGS_PER_PAGE) {
@@ -1915,7 +1952,7 @@ function saveEdit(key) {
   if (!inp) return;
   var newText = inp.value.trim();
   if (!newText) { cancelEdit(); return; }
-  db.ref('msgs/' + key).update({ text: newText, edited: true });
+  getMsgsRef().child(key).update({ text: newText, edited: true });
   editingKey = null;
 }
 
@@ -1924,7 +1961,7 @@ function cancelEdit() {
   var key = editingKey;
   editingKey = null;
   // Re-render by fetching from Firebase
-  db.ref('msgs/' + key).once('value', function(snap) {
+  getMsgsRef().child(key).once('value', function(snap) {
     var data = snap.val();
     if (!data) return;
     var row = document.getElementById('msg-' + key);
@@ -2055,6 +2092,216 @@ function showMiniToast(msg) {
   el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--accent2);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;z-index:2000;animation:toastIn 0.3s ease;pointer-events:none;';
   document.body.appendChild(el);
   setTimeout(function() { el.remove(); }, 2500);
+}
+
+// ── CHANNEL & DM FUNCTIONS ──────────────────
+function loadSidebar() {
+  // Load channels
+  db.ref('channels').on('value', function(snap) {
+    var all = snap.val() || {};
+    var list = document.getElementById('channelsList');
+    list.innerHTML = '';
+    Object.keys(all).sort().forEach(function(key) {
+      var ch = all[key];
+      var item = document.createElement('div');
+      item.className = 'sidebar-item' + (currentChannel === key && currentChannelType === 'channel' ? ' active' : '');
+      item.id = 'ch-item-' + key;
+      item.innerHTML = '<span class="sidebar-item-icon">#</span><span class="sidebar-item-name">' + esc(key) + '</span><span class="sidebar-item-badge" id="ch-badge-' + key + '"></span>';
+      item.addEventListener('click', function() { switchChannel(key, 'channel'); });
+      list.appendChild(item);
+    });
+  });
+
+  // Load online users for DMs
+  db.ref('presence').on('value', function(snap) {
+    var all = snap.val() || {};
+    var now = Date.now();
+    onlineUsers = {};
+    Object.values(all).forEach(function(u) {
+      if (u.name && (now - u.ts) < 15000) onlineUsers[u.name] = true;
+    });
+    renderDmsList();
+  });
+
+  // Also load all registered users for DMs
+  db.ref('users').once('value').then(function(snap) {
+    var all = snap.val() || {};
+    Object.keys(all).forEach(function(key) {
+      var u = all[key];
+      if (u.username && u.username !== myName) {
+        if (!document.getElementById('dm-item-' + key)) renderDmsList();
+      }
+    });
+  });
+
+  // Listen for new users
+  db.ref('users').on('value', function(snap) {
+    renderDmsList(snap.val() || {});
+  });
+}
+
+function renderDmsList(usersData) {
+  if (!usersData) {
+    db.ref('users').once('value').then(function(snap) { renderDmsList(snap.val() || {}); });
+    return;
+  }
+  var list = document.getElementById('dmsList');
+  list.innerHTML = '';
+  Object.keys(usersData).forEach(function(key) {
+    var u = usersData[key];
+    if (!u.username || u.username === myName) return;
+    var isOnline = !!onlineUsers[u.username];
+    var isDmActive = currentChannelType === 'dm' && dmPartner === u.username;
+    var item = document.createElement('div');
+    item.className = 'sidebar-item' + (isDmActive ? ' active' : '');
+    item.id = 'dm-item-' + key;
+    item.innerHTML = '<span class="sidebar-item-online' + (isOnline ? ' on' : '') + '"></span><span class="sidebar-item-name">' + esc(u.username) + '</span><span class="sidebar-item-badge" id="dm-badge-' + key + '"></span>';
+    item.addEventListener('click', function() { switchChannel(u.username, 'dm'); });
+    list.appendChild(item);
+  });
+}
+
+function switchChannel(target, type) {
+  // Detach old listeners
+  Object.keys(channelListeners).forEach(function(path) {
+    db.ref(path).off();
+  });
+  channelListeners = {};
+
+  currentChannelType = type;
+  if (type === 'dm') {
+    dmPartner = target;
+    currentChannel = getDmKey(myName, target);
+    document.getElementById('chatTitle').textContent = '💬 ' + target;
+    document.getElementById('statusText').textContent = onlineUsers[target] ? target + ' está en línea' : target + ' — sin conexión';
+    // Hide ping bar for DMs
+    document.getElementById('pingBar') && (document.getElementById('pingBar').style.display = 'none');
+  } else {
+    dmPartner = null;
+    currentChannel = target;
+    document.getElementById('chatTitle').textContent = '# ' + target;
+    document.getElementById('pingBar') && (document.getElementById('pingBar').style.display = '');
+  }
+
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar-item').forEach(function(el) { el.classList.remove('active'); });
+  var activeId = type === 'dm' ? 'dm-item-' + target.toLowerCase() : 'ch-item-' + target;
+  var activeEl = document.getElementById(activeId);
+  if (activeEl) activeEl.classList.add('active');
+
+  // Clear messages
+  var container = document.getElementById('messagesContainer');
+  container.innerHTML = '<button class="load-more-btn" id="loadMoreBtn" style="margin:0 auto 8px;">⬆ Cargar mensajes anteriores</button><div class="empty-state" id="emptyState">Sin mensajes aún</div>';
+  document.getElementById('loadMoreBtn').addEventListener('click', loadMoreMsgs);
+  oldestMsgKey = null; allMsgsLoaded = false;
+
+  // Reset pinned
+  document.getElementById('pinnedBar').classList.remove('show');
+
+  // Listen to pinned for this channel
+  var pinnedPath = type === 'dm' ? 'dms/' + currentChannel + '/pinned' : 'channels/' + currentChannel + '/pinned';
+  channelListeners[pinnedPath] = true;
+  db.ref(pinnedPath).on('value', function(snap) {
+    var data = snap.val();
+    var bar = document.getElementById('pinnedBar');
+    if (data && data.text) {
+      pinnedKey = data.key;
+      document.getElementById('pinnedText').textContent = data.sender + ': ' + data.text;
+      bar.classList.add('show');
+    } else {
+      bar.classList.remove('show');
+      pinnedKey = null;
+    }
+  });
+
+  var msgsPath = getMsgsRef().toString().replace(db.app.options.databaseURL, '').replace(/^\//, '');
+
+  // Load history
+  getMsgsRef().orderByKey().limitToLast(MSGS_PER_PAGE).once('value', function(snap) {
+    var all = snap.val() || {};
+    var keys = Object.keys(all).sort();
+    if (keys.length > 0) oldestMsgKey = keys[0];
+    if (keys.length < MSGS_PER_PAGE) allMsgsLoaded = true;
+    else document.getElementById('loadMoreBtn').classList.add('show');
+    var empty = document.getElementById('emptyState');
+    if (keys.length > 0 && empty) empty.remove();
+    keys.forEach(function(key) {
+      var data = all[key];
+      if (!data || !data.sender) return;
+      renderMessage(key, data, data.sender === myName);
+    });
+  });
+
+  // Listen for new messages
+  var msgsRef = getMsgsRef();
+  channelListeners[msgsPath] = true;
+  msgsRef.orderByKey().limitToLast(1).on('child_added', function(snap) {
+    var data = snap.val();
+    var key = snap.key;
+    if (!data || !data.sender || !data.ts) return;
+    if (data.ts < startTs - 2000) return;
+    var isMe = data.sender === myName;
+    if (document.getElementById('msg-' + key)) return;
+    renderMessage(key, data, isMe);
+    var msgsEl2 = document.getElementById('messagesContainer');
+    var distFromBottom = msgsEl2.scrollHeight - msgsEl2.scrollTop - msgsEl2.clientHeight;
+    if (!isMe && distFromBottom > 200) {
+      pendingScrollCount++;
+      var badge = document.getElementById('scrollBadge');
+      badge.textContent = pendingScrollCount;
+      badge.classList.add('show');
+      document.getElementById('scrollBottomBtn').classList.add('show');
+    }
+    if (!isMe) {
+      if (data.isPing) showNotifOverlay(data.sender);
+      else notifyMsg(data.sender);
+    }
+  });
+
+  // Reactions/edits listener
+  msgsRef.on('value', function(snap) {
+    var all = snap.val() || {};
+    Object.keys(all).forEach(function(key) {
+      if (all[key] && all[key].reactions) updateReactionsUI(key, all[key].reactions);
+      if (all[key] && all[key].edited) {
+        var bubbleEl = document.querySelector('#msg-' + key + ' .bubble');
+        if (bubbleEl && all[key].type === 'text') {
+          var inner = formatText(all[key].text || '') + '<span class="edited-tag">(editado)</span>';
+          var timeEl = bubbleEl.querySelector('.time');
+          var pickerEl = bubbleEl.querySelector('.reaction-picker');
+          var replyEl = bubbleEl.querySelector('.reply-quote');
+          bubbleEl.innerHTML = (replyEl ? replyEl.outerHTML : '') + inner + (timeEl ? timeEl.outerHTML : '') + (pickerEl ? pickerEl.outerHTML : '');
+        }
+      }
+    });
+  });
+
+  // Close sidebar on mobile
+  if (window.innerWidth < 600) {
+    document.getElementById('sidebar').classList.remove('visible');
+  }
+}
+
+function openCreateChannel() {
+  document.getElementById('createChannelModal').classList.add('show');
+  document.getElementById('newChannelName').value = '';
+  document.getElementById('newChannelName').focus();
+}
+
+function closeCreateChannel() {
+  document.getElementById('createChannelModal').classList.remove('show');
+}
+
+function createChannel() {
+  var name = document.getElementById('newChannelName').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  if (!name) return;
+  db.ref('channels/' + name).once('value').then(function(snap) {
+    if (snap.exists()) { alert('Ese canal ya existe'); return; }
+    db.ref('channels/' + name).set({ name: name, createdAt: Date.now(), createdBy: myName }).then(function() {
+      closeCreateChannel();
+      switchChannel(name, 'channel');
+    });
+  });
 }
 
 function scrollToBottom() {
