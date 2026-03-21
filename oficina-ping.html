@@ -738,6 +738,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <script>
 var CLOUDINARY_CLOUD = "dapxx126b";
 var CLOUDINARY_PRESET = "qtxzvrrq";
@@ -823,6 +824,9 @@ firebase.initializeApp({
   appId: "1:193975134205:web:1413b8863fd81a83c21b94"
 });
 db = firebase.database();
+var messaging = null;
+var VAPID_KEY = 'BDuy8dCA8x0QGZbyTVS4wFMgtFPfHKWT9oLItbrHA8J3FGfN3F7jYdFkdDZ598c8o13eykpb4o98BTv33LKZgqA';
+try { messaging = firebase.messaging(); } catch(e) { console.log('FCM not supported:', e); }
 
 // Aplicar tema
 function applyTheme(id) {
@@ -1143,12 +1147,16 @@ function startApp() {
   loadSidebar();
   switchChannel('general', 'channel');
 
-  // Solicitar permiso de notificaciones del sistema
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
+  // Solicitar permiso y registrar FCM token
+  if ('Notification' in window) {
+    Notification.requestPermission().then(function(perm) {
+      if (perm === 'granted') registerFCMToken();
+    });
+    if (Notification.permission === 'granted') registerFCMToken();
   }
 
   setupTasks();
+  listenForPushRequests();
   // Scroll-to-bottom button logic
   var msgsEl = document.getElementById('messagesContainer');
   var scrollBtn = document.getElementById('scrollBottomBtn');
@@ -1868,6 +1876,59 @@ function sendGif(url) {
   document.getElementById('gifGrid').innerHTML = '<div class="gif-loading">Busca algo para ver GIFs 😄</div>';
 }
 
+function registerFCMToken() {
+  if (!messaging) return;
+  navigator.serviceWorker.ready.then(function(reg) {
+    messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg })
+      .then(function(token) {
+        if (token && myName) {
+          db.ref('fcmTokens/' + myName.toLowerCase().replace(/[^a-z0-9]/g,'_')).set({
+            token: token,
+            user: myName,
+            ts: Date.now()
+          });
+        }
+      })
+      .catch(function(err) { console.log('FCM token error:', err); });
+  });
+}
+
+// Send push notification to all other users via Firebase
+function sendPushToAll(title, body) {
+  db.ref('fcmTokens').once('value').then(function(snap) {
+    var all = snap.val() || {};
+    Object.values(all).forEach(function(entry) {
+      if (entry.user !== myName && entry.token) {
+        // Store notification request in Firebase for a cloud function
+        // Since we're serverless, we use Firebase to trigger SW on other devices
+        db.ref('pushQueue').push({
+          token: entry.token,
+          title: title,
+          body: body,
+          ts: Date.now(),
+          from: myName
+        });
+      }
+    });
+  });
+}
+
+// Listen for incoming push requests from other users
+function listenForPushRequests() {
+  if (!myName) return;
+  var myKey = myName.toLowerCase().replace(/[^a-z0-9]/g,'_');
+  db.ref('fcmTokens/' + myKey + '/pending').on('value', function(snap) {
+    var data = snap.val();
+    if (!data) return;
+    // Show system notification even if page is visible
+    fireSystemNotif(data.title || 'Ping Oficina', data.body || 'Nuevo mensaje');
+    db.ref('fcmTokens/' + myKey + '/pending').remove();
+  });
+}
+
+// Override notifyMsg and showNotifOverlay to also push to other devices
+var _origNotifyMsg = null;
+
 function fireSystemNotif(title, body) {
   if (!('Notification' in window)) return;
   if (Notification.permission === 'granted') {
@@ -2329,11 +2390,17 @@ function esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 
 // Registrar Service Worker para PWA
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('sw.js').catch(function(err) {
-      console.log('SW error:', err);
-    });
-  });
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
+    console.log('SW registered');
+    // Set up FCM message handler for foreground messages
+    if (messaging) {
+      messaging.onMessage(function(payload) {
+        var title = payload.notification ? payload.notification.title : 'Ping Oficina';
+        var body  = payload.notification ? payload.notification.body  : 'Nuevo mensaje';
+        fireSystemNotif(title, body);
+      });
+    }
+  }).catch(function(err) { console.log('SW error:', err); });
 }
 </script>
 </body>
