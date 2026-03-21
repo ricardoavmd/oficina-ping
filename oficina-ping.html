@@ -329,6 +329,34 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .attach-item-btn { width:46px; height:46px; border-radius:50%; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:22px; -webkit-appearance:none; box-shadow:0 3px 12px rgba(0,0,0,0.15); }
 .attach-item-label { font-size:10px; font-weight:600; color:var(--text,#1e1b4b); white-space:nowrap; background:var(--surface,rgba(255,255,255,0.9)); padding:2px 6px; border-radius:8px; border:1px solid var(--border,rgba(168,85,247,0.15)); }
 
+/* AUTH SCREENS */
+.auth-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:2rem 2rem; gap:1rem; background:linear-gradient(160deg,#fdf4ff 0%,#eef6ff 55%,#f0fff4 100%); }
+.auth-screen.hidden { display:none; }
+.auth-logo { width:64px; height:64px; background:linear-gradient(135deg,#e879f9,#60a5fa); border-radius:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 24px rgba(232,121,249,0.35); margin-bottom:4px; }
+.auth-logo svg { width:32px; height:32px; }
+.auth-title { font-family:var(--font); font-size:26px; color:#1e1b4b; font-weight:normal; letter-spacing:-0.5px; }
+.auth-subtitle { font-size:13px; color:#9d86c8; text-align:center; }
+.auth-form { width:100%; display:flex; flex-direction:column; gap:12px; }
+.auth-field { display:flex; flex-direction:column; gap:5px; }
+.auth-label { font-size:11px; font-weight:700; color:#a78bca; text-transform:uppercase; letter-spacing:0.8px; }
+.auth-input { width:100%; padding:12px 14px; border:1.5px solid rgba(168,85,247,0.2); border-radius:14px; font-size:15px; font-family:var(--font-ui); background:rgba(255,255,255,0.8); color:#1e1b4b; outline:none; -webkit-appearance:none; transition:border-color 0.2s,box-shadow 0.2s; }
+.auth-input:focus { border-color:#a855f7; box-shadow:0 0 0 3px rgba(168,85,247,0.1); }
+.auth-select { width:100%; padding:12px 14px; border:1.5px solid rgba(168,85,247,0.2); border-radius:14px; font-size:14px; font-family:var(--font-ui); background:rgba(255,255,255,0.8); color:#1e1b4b; outline:none; -webkit-appearance:none; cursor:pointer; }
+.auth-select:focus { border-color:#a855f7; }
+.auth-btn { width:100%; padding:14px; background:linear-gradient(135deg,#e879f9,#60a5fa); color:#fff; border:none; border-radius:14px; font-size:15px; font-weight:700; cursor:pointer; -webkit-appearance:none; box-shadow:0 4px 18px rgba(232,121,249,0.35); }
+.auth-btn:active { opacity:0.9; }
+.auth-btn-secondary { width:100%; padding:12px; background:rgba(255,255,255,0.7); color:#a855f7; border:1.5px solid rgba(168,85,247,0.25); border-radius:14px; font-size:14px; font-weight:600; cursor:pointer; -webkit-appearance:none; }
+.auth-links { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.auth-link { background:none; border:none; color:#a855f7; font-size:13px; cursor:pointer; text-decoration:underline; font-family:var(--font-ui); padding:0; }
+.auth-error { font-size:13px; color:#e94560; text-align:center; padding:8px 12px; background:rgba(233,69,96,0.08); border-radius:10px; display:none; }
+.auth-error.show { display:block; }
+.auth-success { font-size:13px; color:#10b981; text-align:center; padding:8px 12px; background:rgba(16,185,129,0.08); border-radius:10px; display:none; }
+.auth-success.show { display:block; }
+.auth-divider { display:flex; align-items:center; gap:10px; width:100%; }
+.auth-divider-line { flex:1; height:1px; background:rgba(168,85,247,0.15); }
+.auth-divider-text { font-size:12px; color:#b8aed4; }
+/* passwords are hashed with SHA-256 */
+
 /* GIF TRENDING TABS */
 .gif-tabs { display:flex; gap:6px; padding:6px 10px 0; flex-shrink:0; }
 .gif-tab { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border2,rgba(168,85,247,0.2)); background:var(--surface2,rgba(255,255,255,0.7)); color:var(--muted,#9d86c8); -webkit-appearance:none; }
@@ -351,21 +379,123 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 </div>
 
 <div class="app">
-  <!-- SETUP -->
-  <div class="setup-screen" id="setupScreen">
-    <div class="logo">
+  <!-- LOGIN -->
+  <div class="auth-screen" id="loginScreen">
+    <div class="auth-logo">
       <svg viewBox="0 0 32 32" fill="none"><path d="M6 8h20v14a2 2 0 01-2 2H8a2 2 0 01-2-2V8z" stroke="#fff" stroke-width="1.8" fill="none"/><path d="M6 8l10 9 10-9" stroke="#fff" stroke-width="1.8"/></svg>
     </div>
-    <h1>Ping</h1>
-    <p>Chat de oficina</p>
+    <div class="auth-title">Ping</div>
+    <div class="auth-subtitle">Chat de oficina</div>
+    <div class="auth-form">
+      <div class="auth-field">
+        <div class="auth-label">Usuario</div>
+        <input class="auth-input" id="loginUser" type="text" placeholder="Tu nombre de usuario" autocomplete="off" />
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Contraseña</div>
+        <input class="auth-input" id="loginPass" type="password" placeholder="Tu contraseña" autocomplete="off" />
+      </div>
+      <div class="auth-error" id="loginError">Usuario o contraseña incorrectos</div>
+      <button class="auth-btn" id="loginBtn">Iniciar sesión</button>
+      <div class="auth-divider"><div class="auth-divider-line"></div><div class="auth-divider-text">o</div><div class="auth-divider-line"></div></div>
+      <div class="auth-links">
+        <button class="auth-link" onclick="showScreen('registerScreen')">¿No tienes cuenta? Regístrate</button>
+        <button class="auth-link" onclick="showScreen('recoverScreen')">¿Olvidaste tu contraseña?</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER -->
+  <div class="auth-screen hidden" id="registerScreen">
+    <div class="auth-logo">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M6 8h20v14a2 2 0 01-2 2H8a2 2 0 01-2-2V8z" stroke="#fff" stroke-width="1.8" fill="none"/><path d="M6 8l10 9 10-9" stroke="#fff" stroke-width="1.8"/></svg>
+    </div>
+    <div class="auth-title">Crear cuenta</div>
+    <div class="auth-subtitle">Únete al chat de la oficina</div>
+    <div class="auth-form">
+      <div class="auth-field">
+        <div class="auth-label">Nombre de usuario</div>
+        <input class="auth-input" id="regUser" type="text" placeholder="Elige un nombre de usuario" autocomplete="off" />
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Contraseña</div>
+        <input class="auth-input" id="regPass" type="password" placeholder="Elige una contraseña" autocomplete="off" />
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Pregunta de seguridad</div>
+        <select class="auth-select" id="regQuestion">
+          <option value="">Selecciona una pregunta...</option>
+          <option value="mascota">¿Cuál es el nombre de tu primera mascota?</option>
+          <option value="ciudad">¿En qué ciudad naciste?</option>
+          <option value="madre">¿Cuál es el apellido de soltera de tu madre?</option>
+          <option value="colegio">¿Cómo se llamaba tu colegio?</option>
+          <option value="pelicula">¿Cuál es tu película favorita?</option>
+          <option value="comida">¿Cuál es tu comida favorita?</option>
+        </select>
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Respuesta de seguridad</div>
+        <input class="auth-input" id="regAnswer" type="text" placeholder="Tu respuesta (guárdala bien)" autocomplete="off" />
+      </div>
+      <div class="auth-field">
+        <div class="auth-label">Elige tu tema</div>
+        <div class="theme-swatches" id="setupSwatches" style="justify-content:flex-start;"></div>
+      </div>
+      <div class="auth-error" id="registerError"></div>
+      <div class="auth-success" id="registerSuccess"></div>
+      <button class="auth-btn" id="registerBtn">Crear cuenta</button>
+      <button class="auth-link" onclick="showScreen('loginScreen')" style="margin-top:4px;">¿Ya tienes cuenta? Inicia sesión</button>
+    </div>
+  </div>
+
+  <!-- RECOVER PASSWORD -->
+  <div class="auth-screen hidden" id="recoverScreen">
+    <div class="auth-logo">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M6 8h20v14a2 2 0 01-2 2H8a2 2 0 01-2-2V8z" stroke="#fff" stroke-width="1.8" fill="none"/><path d="M6 8l10 9 10-9" stroke="#fff" stroke-width="1.8"/></svg>
+    </div>
+    <div class="auth-title">Recuperar contraseña</div>
+    <div class="auth-subtitle">Responde tu pregunta de seguridad</div>
+    <div class="auth-form">
+      <div class="auth-field">
+        <div class="auth-label">Usuario</div>
+        <input class="auth-input" id="recoverUser" type="text" placeholder="Tu nombre de usuario" autocomplete="off" />
+      </div>
+      <div id="recoverQuestionWrap" style="display:none;">
+        <div class="auth-label" style="margin-bottom:8px;">Pregunta de seguridad</div>
+        <div id="recoverQuestionText" style="font-size:14px;color:#1e1b4b;padding:10px 14px;background:rgba(168,85,247,0.07);border-radius:12px;margin-bottom:12px;"></div>
+        <div class="auth-field">
+          <div class="auth-label">Tu respuesta</div>
+          <input class="auth-input" id="recoverAnswer" type="text" placeholder="Responde la pregunta" autocomplete="off" />
+        </div>
+      </div>
+      <div class="auth-error" id="recoverError"></div>
+      <div class="auth-success" id="recoverSuccess"></div>
+      <div id="recoverResult" style="display:none;">
+        <div class="auth-field">
+          <div class="auth-label">Nueva contraseña</div>
+          <input class="auth-input" id="recoverNewPass" type="password" placeholder="Escribe tu nueva contraseña" autocomplete="off" />
+        </div>
+        <div class="auth-field" style="margin-top:8px;">
+          <div class="auth-label">Confirmar contraseña</div>
+          <input class="auth-input" id="recoverNewPass2" type="password" placeholder="Repite la contraseña" autocomplete="off" />
+        </div>
+      </div>
+      <button class="auth-btn" id="recoverBtn">Buscar cuenta</button>
+      <button class="auth-link" onclick="showScreen('loginScreen')" style="margin-top:4px;">Volver al inicio de sesión</button>
+    </div>
+  </div>
+
+  <!-- SETUP (tema, solo visible después de login) -->
+  <div class="auth-screen hidden" id="setupScreen">
+    <div class="auth-logo">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M6 8h20v14a2 2 0 01-2 2H8a2 2 0 01-2-2V8z" stroke="#fff" stroke-width="1.8" fill="none"/><path d="M6 8l10 9 10-9" stroke="#fff" stroke-width="1.8"/></svg>
+    </div>
+    <div class="auth-title">¡Bienvenido!</div>
+    <div class="auth-subtitle" id="welcomeMsg">Listo para chatear</div>
     <div style="width:100%;display:flex;flex-direction:column;gap:14px;">
       <div>
-        <div class="field-label">Tu nombre</div>
-        <input type="text" id="myNameInput" placeholder="¿Cómo te llamas?" autocomplete="off" />
-      </div>
-      <div>
-        <div class="theme-label">Elige tu tema</div>
-        <div class="theme-swatches" id="setupSwatches"></div>
+        <div class="field-label">Elige tu tema</div>
+        <div class="theme-swatches" id="themeSwatchesLogin"></div>
       </div>
       <button class="btn-primary" id="enterBtn">Entrar al chat</button>
       <p class="hint">Cada uno elige su propio tema</p>
@@ -387,6 +517,8 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
           <button class="header-menu-item" onclick="openSoundPanel();closeHeaderMenu()"><span class="header-menu-item-icon">🔔</span>Sonidos</button>
           <button class="header-menu-item" onclick="document.getElementById('tasksOverlay').classList.add('show');document.getElementById('taskInput').focus();closeHeaderMenu()"><span class="header-menu-item-icon">✅</span>Lista de tareas</button>
           <button class="header-menu-item" onclick="closeHeaderMenu();setTimeout(function(){document.getElementById('themePanel').classList.toggle('show');},50)"><span class="header-menu-item-icon">🎨</span>Cambiar tema</button>
+          <div style="height:1px;background:rgba(168,85,247,0.1);margin:4px 0;"></div>
+          <button class="header-menu-item" onclick="doLogout();closeHeaderMenu()"><span class="header-menu-item-icon">🚪</span>Cerrar sesión</button>
         </div>
       </div>
     </div>
@@ -556,6 +688,14 @@ var THEMES = [
 ];
 
 var GIPHY_KEY = 'FxebxAp3BJvOScbXlWhixuqqQIQWIW1W';
+var SECURITY_QUESTIONS = {
+  'mascota': '¿Cuál es el nombre de tu primera mascota?',
+  'ciudad': '¿En qué ciudad naciste?',
+  'madre': '¿Cuál es el apellido de soltera de tu madre?',
+  'colegio': '¿Cómo se llamaba tu colegio?',
+  'pelicula': '¿Cuál es tu película favorita?',
+  'comida': '¿Cuál es tu comida favorita?'
+};
 var MSGS_PER_PAGE = 40;
 var oldestMsgKey = null;
 var allMsgsLoaded = false;
@@ -644,8 +784,18 @@ function buildSwatches(container, cls) {
 }
 
 buildSwatches(document.getElementById('setupSwatches'), 'swatch');
+buildSwatches(document.getElementById('themeSwatchesLogin'), 'swatch');
 buildSwatches(document.getElementById('themeOptions'), 'theme-opt');
 applyTheme(currentTheme);
+
+// Auto-login if session saved
+(function() {
+  var savedUser = localStorage.getItem('ping-user');
+  if (savedUser) {
+    document.getElementById('welcomeMsg').textContent = '¡Hola de nuevo, ' + savedUser + '!';
+    showScreen('setupScreen');
+  }
+})();
 
 // Sticker grid
 var grid = document.getElementById('stickerGrid');
@@ -658,8 +808,19 @@ STICKERS.forEach(function(s) {
 });
 
 // Botones
+// Auth wires
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('loginUser').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('loginPass').focus(); });
+document.getElementById('loginPass').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
+
+document.getElementById('registerBtn').addEventListener('click', doRegister);
+document.getElementById('regAnswer').addEventListener('keydown', function(e){ if(e.key==='Enter') doRegister(); });
+
+document.getElementById('recoverBtn').addEventListener('click', doRecover);
+document.getElementById('recoverUser').addEventListener('keydown', function(e){ if(e.key==='Enter') doRecover(); });
+document.getElementById('recoverAnswer') && document.getElementById('recoverAnswer').addEventListener('keydown', function(e){ if(e.key==='Enter') doRecover(); });
+
 document.getElementById('enterBtn').addEventListener('click', startApp);
-document.getElementById('myNameInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') startApp(); });
 document.getElementById('pingBtn').addEventListener('click', sendPing);
 document.getElementById('sendBtn').addEventListener('click', sendMessage);
 document.getElementById('msgInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') sendMessage(); });
@@ -744,9 +905,155 @@ document.addEventListener('visibilitychange', function() {
   }
 });
 
+function showScreen(id) {
+  ['loginScreen','registerScreen','recoverScreen','setupScreen'].forEach(function(s) {
+    var el = document.getElementById(s);
+    if (el) el.classList.toggle('hidden', s !== id);
+  });
+  // Reset recover screen state
+  if (id === 'recoverScreen') {
+    document.getElementById('recoverQuestionWrap').style.display = 'none';
+    document.getElementById('recoverResult').style.display = 'none';
+    document.getElementById('recoverError').classList.remove('show');
+    document.getElementById('recoverSuccess').classList.remove('show');
+    document.getElementById('recoverBtn').textContent = 'Buscar cuenta';
+    document.getElementById('recoverBtn').onclick = doRecover;
+    document.getElementById('recoverUser').value = '';
+    document.getElementById('recoverAnswer').value = '';
+    document.getElementById('recoverNewPass').value = '';
+    document.getElementById('recoverNewPass2').value = '';
+  }
+}
+
+// SHA-256 hash using Web Crypto API
+function sha256(text) {
+  var msgBuffer = new TextEncoder().encode(text);
+  return crypto.subtle.digest('SHA-256', msgBuffer).then(function(hashBuffer) {
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  });
+}
+
+// SHA-256 hash for security answers too
+function sha256Answer(text) {
+  return sha256(text.toLowerCase().trim());
+}
+
+function doLogin() {
+  var user = document.getElementById('loginUser').value.trim();
+  var pass = document.getElementById('loginPass').value.trim();
+  var errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+  if (!user || !pass) { errEl.textContent = 'Completa todos los campos'; errEl.classList.add('show'); return; }
+  sha256(pass).then(function(passHash) {
+    db.ref('users/' + user.toLowerCase()).once('value').then(function(snap) {
+      var data = snap.val();
+      if (!data) { errEl.textContent = 'Usuario no encontrado'; errEl.classList.add('show'); return; }
+      if (data.passwordHash !== passHash) { errEl.textContent = 'Contraseña incorrecta'; errEl.classList.add('show'); return; }
+      localStorage.setItem('ping-user', user);
+      localStorage.setItem('ping-theme', data.theme || 'default');
+      document.getElementById('welcomeMsg').textContent = '¡Hola, ' + user + '!';
+      applyTheme(data.theme || 'default');
+      showScreen('setupScreen');
+    });
+  });
+}
+
+function doRegister() {
+  var user = document.getElementById('regUser').value.trim();
+  var pass = document.getElementById('regPass').value.trim();
+  var qKey = document.getElementById('regQuestion').value;
+  var ans  = document.getElementById('regAnswer').value.trim();
+  var errEl = document.getElementById('registerError');
+  var okEl  = document.getElementById('registerSuccess');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!user || !pass || !qKey || !ans) { errEl.textContent = 'Completa todos los campos'; errEl.classList.add('show'); return; }
+  if (user.length < 3) { errEl.textContent = 'El usuario debe tener al menos 3 caracteres'; errEl.classList.add('show'); return; }
+  if (pass.length < 4) { errEl.textContent = 'La contraseña debe tener al menos 4 caracteres'; errEl.classList.add('show'); return; }
+  db.ref('users/' + user.toLowerCase()).once('value').then(function(snap) {
+    if (snap.exists()) { errEl.textContent = 'Ese nombre de usuario ya está en uso'; errEl.classList.add('show'); return; }
+    // Hash both password and security answer before saving
+    Promise.all([sha256(pass), sha256Answer(ans)]).then(function(hashes) {
+      db.ref('users/' + user.toLowerCase()).set({
+        username: user,
+        passwordHash: hashes[0],
+        questionKey: qKey,
+        answerHash: hashes[1],
+        theme: currentTheme,
+        createdAt: Date.now()
+      }).then(function() {
+        okEl.textContent = '¡Cuenta creada! Ahora puedes iniciar sesión.';
+        okEl.classList.add('show');
+        setTimeout(function() { showScreen('loginScreen'); }, 1800);
+      });
+    });
+  });
+}
+
+function doRecover() {
+  var user = document.getElementById('recoverUser').value.trim();
+  var errEl = document.getElementById('recoverError');
+  var okEl  = document.getElementById('recoverSuccess');
+  var qWrap = document.getElementById('recoverQuestionWrap');
+  var resultEl = document.getElementById('recoverResult');
+  errEl.classList.remove('show');
+  okEl.classList.remove('show');
+
+  // Step 1: find user and show security question
+  if (qWrap.style.display === 'none') {
+    if (!user) { errEl.textContent = 'Ingresa tu nombre de usuario'; errEl.classList.add('show'); return; }
+    db.ref('users/' + user.toLowerCase()).once('value').then(function(snap) {
+      var data = snap.val();
+      if (!data) { errEl.textContent = 'Usuario no encontrado'; errEl.classList.add('show'); return; }
+      document.getElementById('recoverQuestionText').textContent = SECURITY_QUESTIONS[data.questionKey] || data.questionKey;
+      qWrap.style.display = 'block';
+      document.getElementById('recoverBtn').textContent = 'Verificar respuesta';
+      document.getElementById('recoverAnswer').focus();
+    });
+    return;
+  }
+
+  // Step 2: verify answer — show new password fields
+  if (resultEl.style.display === 'none') {
+    var ans = document.getElementById('recoverAnswer').value.trim();
+    if (!ans) { errEl.textContent = 'Ingresa tu respuesta'; errEl.classList.add('show'); return; }
+    sha256Answer(ans).then(function(ansHash) {
+      db.ref('users/' + user.toLowerCase()).once('value').then(function(snap) {
+        var data = snap.val();
+        if (!data) return;
+        if (data.answerHash !== ansHash) { errEl.textContent = 'Respuesta incorrecta'; errEl.classList.add('show'); return; }
+        resultEl.style.display = 'block';
+        document.getElementById('recoverBtn').textContent = 'Guardar nueva contraseña';
+        document.getElementById('recoverNewPass').focus();
+      });
+    });
+    return;
+  }
+
+  // Step 3: save new hashed password
+  var newPass = document.getElementById('recoverNewPass').value.trim();
+  var newPass2 = document.getElementById('recoverNewPass2').value.trim();
+  if (!newPass || newPass.length < 4) { errEl.textContent = 'La contraseña debe tener al menos 4 caracteres'; errEl.classList.add('show'); return; }
+  if (newPass !== newPass2) { errEl.textContent = 'Las contraseñas no coinciden'; errEl.classList.add('show'); return; }
+  sha256(newPass).then(function(newHash) {
+    db.ref('users/' + user.toLowerCase() + '/passwordHash').set(newHash).then(function() {
+      okEl.textContent = '✓ Contraseña actualizada. Ya puedes iniciar sesión.';
+      okEl.classList.add('show');
+      resultEl.style.display = 'none';
+      qWrap.style.display = 'none';
+      document.getElementById('recoverBtn').textContent = 'Ir al inicio de sesión';
+      document.getElementById('recoverBtn').onclick = function() { showScreen('loginScreen'); };
+    });
+  });
+}
+
 function startApp() {
-  myName = document.getElementById('myNameInput').value.trim();
-  if (!myName) { alert('Escribe tu nombre para entrar.'); return; }
+  var savedUser = localStorage.getItem('ping-user');
+  myName = savedUser || 'Usuario';
+  // Save theme preference for this user
+  if (savedUser) {
+    db.ref('users/' + savedUser.toLowerCase() + '/theme').set(currentTheme);
+  }
   startTs = Date.now();
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('chatScreen').classList.add('visible');
@@ -1759,6 +2066,14 @@ function scrollToBottom() {
 }
 
 function clearBlink() { clearInterval(blinkInterval); blinkInterval = null; document.title = originalTitle; }
+
+function doLogout() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  localStorage.removeItem('ping-user');
+  // Remove presence
+  if (myName) db.ref('presence/' + myName).remove();
+  location.reload();
+}
 function getTime() { var n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); }
 function pad(n) { return n.toString().padStart(2, '0'); }
 function esc(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
