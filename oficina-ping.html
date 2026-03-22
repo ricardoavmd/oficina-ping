@@ -10,6 +10,9 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%232c3e50'/><path d='M38 58h116v74a12 12 0 01-12 12H50a12 12 0 01-12-12V58z' stroke='white' stroke-width='10' fill='none'/><path d='M38 58l58 52 58-52' stroke='white' stroke-width='10' fill='none'/></svg>">
 <title>Ping — Oficina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root {
@@ -22,7 +25,7 @@
   --border2:rgba(168,85,247,0.2);
   --text:#1e1b4b;
   --muted:#7c6f9f;
-  --muted2:#b8aed4;
+  --muted2:#9b8fc2;
   --accent:#f15bb5;
   --accent2:linear-gradient(135deg,#e879f9,#60a5fa);
   --accent2-solid:#a855f7;
@@ -32,7 +35,7 @@
   --bubble-them-text:#1e1b4b;
   --grad:#e879f9,#60a5fa;
   --grad2:#60a5fa,#34d399;
-  --font-ui:system-ui,-apple-system,sans-serif; --font:'Georgia',serif;
+  --font-ui:'Outfit',system-ui,-apple-system,sans-serif; --font:'Georgia',serif;
   --body-bg:linear-gradient(160deg,#fdf4ff 0%,#e8f5ff 55%,#f0fff4 100%);
   --sidebar-bg:rgba(243,232,255,0.7);
   --sidebar-border:rgba(232,121,249,0.18);
@@ -455,6 +458,18 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .log-item-time { font-size:11px; color:var(--muted2); margin-top:2px; }
 .log-empty { text-align:center; padding:24px; font-size:13px; color:var(--muted2); }
 
+/* TOAST NOTIFICATIONS */
+.toast-container { position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:3000; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+.toast { padding:10px 18px; border-radius:14px; font-size:13px; font-weight:600; color:#fff; display:flex; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(0,0,0,0.2); animation:toastIn 0.3s ease; pointer-events:all; max-width:90vw; }
+.toast-error { background:#e24b4a; }
+.toast-success { background:#639922; }
+.toast-info { background:linear-gradient(135deg,var(--bubble-me-grad,#e879f9,#60a5fa)); }
+.toast-warn { background:#ba7517; }
+
+/* MARKDOWN TOOLBAR */
+#mdToolbar { opacity:0; transition:opacity 0.15s; pointer-events:none; height:0; overflow:hidden; padding:0 !important; }
+#mdToolbar.visible { opacity:1; pointer-events:all; height:auto; padding:0 2px 4px !important; }
+
 /* MARKDOWN */
 .bubble .md-bold { font-weight:700; }
 .bubble .md-italic { font-style:italic; }
@@ -516,6 +531,8 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 </head>
 <body>
 
+<div class="toast-container" id="toastContainer"></div>
+
 <div class="notif-overlay" id="notifOverlay">
   <div class="notif-card">
     <div class="notif-big-dot"></div>
@@ -539,11 +556,11 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
     <div class="auth-subtitle">Chat de oficina</div>
     <div class="auth-form">
       <div class="auth-field">
-        <div class="auth-label">Usuario</div>
+        <label class="auth-label" for="loginUser">Usuario</label>
         <input class="auth-input" id="loginUser" type="text" placeholder="Tu nombre de usuario" autocomplete="off" />
       </div>
       <div class="auth-field">
-        <div class="auth-label">Contraseña</div>
+        <label class="auth-label" for="loginPass">Contraseña</label>
         <input class="auth-input" id="loginPass" type="password" placeholder="Tu contraseña" autocomplete="off" />
       </div>
       <div class="auth-error" id="loginError">Usuario o contraseña incorrectos</div>
@@ -565,11 +582,11 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
     <div class="auth-subtitle">Únete al chat de la oficina</div>
     <div class="auth-form">
       <div class="auth-field">
-        <div class="auth-label">Nombre de usuario</div>
+        <label class="auth-label" for="regUser">Nombre de usuario</label>
         <input class="auth-input" id="regUser" type="text" placeholder="Elige un nombre de usuario" autocomplete="off" />
       </div>
       <div class="auth-field">
-        <div class="auth-label">Contraseña</div>
+        <label class="auth-label" for="regPass">Contraseña</label>
         <input class="auth-input" id="regPass" type="password" placeholder="Elige una contraseña" autocomplete="off" />
       </div>
       <div class="auth-field">
@@ -585,7 +602,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
         </select>
       </div>
       <div class="auth-field">
-        <div class="auth-label">Respuesta de seguridad</div>
+        <label class="auth-label" for="regAnswer">Respuesta de seguridad</label>
         <input class="auth-input" id="regAnswer" type="text" placeholder="Tu respuesta (guárdala bien)" autocomplete="off" />
       </div>
       <div class="auth-error" id="registerError"></div>
@@ -604,14 +621,14 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
     <div class="auth-subtitle">Responde tu pregunta de seguridad</div>
     <div class="auth-form">
       <div class="auth-field">
-        <div class="auth-label">Usuario</div>
+        <label class="auth-label" for="recoverUser">Usuario</label>
         <input class="auth-input" id="recoverUser" type="text" placeholder="Tu nombre de usuario" autocomplete="off" />
       </div>
       <div id="recoverQuestionWrap" style="display:none;">
         <div class="auth-label" style="margin-bottom:8px;">Pregunta de seguridad</div>
         <div id="recoverQuestionText" style="font-size:14px;color:#1e1b4b;padding:10px 14px;background:rgba(168,85,247,0.07);border-radius:12px;margin-bottom:12px;"></div>
         <div class="auth-field">
-          <div class="auth-label">Tu respuesta</div>
+          <label class="auth-label" for="recoverAnswer">Tu respuesta</label>
           <input class="auth-input" id="recoverAnswer" type="text" placeholder="Responde la pregunta" autocomplete="off" />
         </div>
       </div>
@@ -619,11 +636,11 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <div class="auth-success" id="recoverSuccess"></div>
       <div id="recoverResult" style="display:none;">
         <div class="auth-field">
-          <div class="auth-label">Nueva contraseña</div>
+          <label class="auth-label" for="recoverNewPass">Nueva contraseña</label>
           <input class="auth-input" id="recoverNewPass" type="password" placeholder="Escribe tu nueva contraseña" autocomplete="off" />
         </div>
         <div class="auth-field" style="margin-top:8px;">
-          <div class="auth-label">Confirmar contraseña</div>
+          <label class="auth-label" for="recoverNewPass2">Confirmar contraseña</label>
           <input class="auth-input" id="recoverNewPass2" type="password" placeholder="Repite la contraseña" autocomplete="off" />
         </div>
       </div>
@@ -662,7 +679,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
   <!-- CHAT -->
   <div class="chat-screen" id="chatScreen" style="flex-direction:row;">
     <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
+    <nav class="sidebar" id="sidebar" aria-label="Canales y mensajes">
       <div class="sidebar-header">
         <div class="sidebar-avatar" id="sidebarAvatar">?</div>
         <div class="sidebar-username" id="sidebarUsername">—</div>
@@ -677,12 +694,12 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
         <div class="sidebar-section">Mensajes directos</div>
         <div id="dmsList"></div>
       </div>
-    </div>
+    </nav>
 
     <!-- MAIN CHAT -->
     <div class="chat-main">
     <div class="header">
-      <button class="theme-btn" id="sidebarToggleBtn" title="Canales" style="font-size:16px;">☰</button>
+      <button class="theme-btn" id="sidebarToggleBtn" title="Canales" aria-label="Mostrar canales" style="font-size:16px;">☰</button>
       <div class="header-avatar" id="myAvatarDisplay">?</div>
       <div class="header-info">
         <div class="header-name" id="chatTitle">Ping — Oficina</div>
@@ -690,7 +707,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       </div>
       <div class="unread-badge" id="unreadBadge">nuevo</div>
       <div style="position:relative;">
-        <button class="header-menu-btn" id="headerMenuBtn" title="Opciones">⋯</button>
+        <button class="header-menu-btn" id="headerMenuBtn" title="Opciones" aria-label="Menú de opciones">⋯</button>
         <div class="header-menu-dropdown" id="headerMenuDropdown">
           <button class="header-menu-item" onclick="openSearch();closeHeaderMenu()"><span class="header-menu-item-icon">🔍</span>Buscar mensajes</button>
           <button class="header-menu-item" onclick="openDir();closeHeaderMenu()"><span class="header-menu-item-icon">👥</span>Directorio</button>
@@ -720,25 +737,25 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <div class="presence-chips" id="presenceChips"><span style="font-size:12px;color:var(--muted2)">Esperando...</span></div>
     </div>
     <div class="ping-bar" id="pingBar">
-      <button class="btn-ping" id="pingBtn"><div class="ping-dot"></div> Enviar PING a todos</button>
+      <button class="btn-ping" id="pingBtn" aria-label="Enviar PING urgente a todos"><div class="ping-dot"></div> Enviar PING a todos</button>
     </div>
     <div class="typing-bar" id="typingBar">
       <span id="typingName"></span>
       <span class="typing-dots"><span></span><span></span><span></span></span>
     </div>
     <div class="messages-wrap">
-      <div class="messages" id="messagesContainer">
+      <div class="messages" id="messagesContainer" role="log" aria-live="polite" aria-label="Mensajes del canal">
         <button class="load-more-btn" id="loadMoreBtn" style="margin:0 auto 8px;">⬆ Cargar mensajes anteriores</button>
         <div class="empty-state" id="emptyState">Sin mensajes aún — ¡manda un Ping!</div>
       </div>
-      <button class="scroll-bottom-btn" id="scrollBottomBtn" onclick="scrollToBottom()" title="Ir a los mensajes recientes">
+      <button class="scroll-bottom-btn" id="scrollBottomBtn" onclick="scrollToBottom()" title="Ir a los mensajes recientes" aria-label="Ir a los mensajes recientes">
         ↓
         <span class="scroll-badge" id="scrollBadge"></span>
       </button>
     </div>
     <div class="reply-preview" id="replyPreview">
       <div class="reply-preview-text"><strong id="replyPreviewSender"></strong><span id="replyPreviewText"></span></div>
-      <button class="reply-cancel" onclick="cancelReply()">✕</button>
+      <button class="reply-cancel" onclick="cancelReply()" aria-label="Cancelar respuesta">✕</button>
     </div>
     <div class="gif-panel" id="gifPanel">
       <div style="display:flex;align-items:center;gap:6px;padding:6px 10px 0;">
@@ -761,7 +778,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
     </div>
     <div class="input-area">
       <div class="attach-menu-wrap">
-        <button class="attach-btn" id="attachBtn" title="Adjuntar">📎</button>
+        <button class="attach-btn" id="attachBtn" title="Adjuntar" aria-label="Adjuntar archivo">📎</button>
         <div class="attach-menu" id="attachMenu">
           <div class="attach-item" onclick="toggleStickerFromAttach();event.stopPropagation();">
             <button class="attach-item-btn" style="background:linear-gradient(135deg,#f9a8d4,#e879f9);">😄</button>
@@ -799,10 +816,10 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
         </div>
         <input class="msg-input" id="msgInput" type="text" placeholder="Escribe un mensaje... (**negrita** _cursiva_ \`código\`)" autocomplete="off" />
       </div>
-      <button class="voice-btn" id="voiceBtn" title="Mantén para grabar">
+      <button class="voice-btn" id="voiceBtn" title="Mantén para grabar" aria-label="Grabar nota de voz">
         <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" stroke-width="2"/><path d="M5 10a7 7 0 0014 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="19" x2="12" y2="22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
-      <button class="btn-send" id="sendBtn">
+      <button class="btn-send" id="sendBtn" aria-label="Enviar mensaje">
         <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <input type="file" id="fileInput" accept="image/*" />
@@ -1040,6 +1057,15 @@ firebase.initializeApp({
   appId: "1:193975134205:web:1413b8863fd81a83c21b94"
 });
 db = firebase.database();
+
+// Global Firebase error wrapper
+function dbGet(ref) {
+  return ref.once('value').catch(function(err) {
+    console.error('Firebase error:', err);
+    showToast('Error de conexión con Firebase', 'error');
+    return { val: function(){ return null; }, exists: function(){ return false; } };
+  });
+}
 var messaging = null;
 var VAPID_KEY = 'BDuy8dCA8x0QGZbyTVS4wFMgtFPfHKWT9oLItbrHA8J3FGfN3F7jYdFkdDZ598c8o13eykpb4o98BTv33LKZgqA';
 try { messaging = firebase.messaging(); } catch(e) { console.log('FCM not supported:', e); }
@@ -1473,7 +1499,8 @@ function startApp() {
   myPresRef.onDisconnect().remove(); // auto-remove on disconnect
   function heartbeat() { myPresRef.set({ ts: Date.now(), name: myName }); }
   heartbeat();
-  setInterval(heartbeat, 5000);
+  var heartbeatInterval = setInterval(heartbeat, 5000);
+  window.addEventListener('beforeunload', function() { clearInterval(heartbeatInterval); });
   window.addEventListener('beforeunload', function() {
     myPresRef.remove();
     db.ref('typing/' + myName).remove();
@@ -1482,6 +1509,12 @@ function startApp() {
   // Typing indicator
   var myTypingRef = db.ref('typing/' + myName);
   myTypingRef.onDisconnect().remove();
+  document.getElementById('msgInput').addEventListener('focus', function() {
+    document.getElementById('mdToolbar').classList.add('visible');
+  });
+  document.getElementById('msgInput').addEventListener('blur', function() {
+    setTimeout(function() { document.getElementById('mdToolbar').classList.remove('visible'); }, 200);
+  });
   document.getElementById('msgInput').addEventListener('input', function() {
     myTypingRef.set({ name: myName, ts: Date.now() });
     clearTimeout(typingTimeout);
@@ -1548,7 +1581,7 @@ function renderMessage(key, data, isMe) {
   var bubbleContent = '';
   var bubbleClass = 'bubble';
   if (data.type === 'image') {
-    bubbleContent = '<img src="' + data.url + '" alt="imagen" onclick="openLightbox(\'' + data.url + '\')" />';
+    bubbleContent = '<img src="' + data.url + '" alt="Imagen enviada por ' + esc(data.sender) + '" loading="lazy" onclick="openLightbox(\'' + data.url + '\')" />';
   } else if (data.type === 'audio') {
     var dur = data.duration ? formatDuration(data.duration) : '0:00';
     var bars = '';
@@ -1796,7 +1829,7 @@ function startRecording() {
         document.getElementById('recTime').textContent = m + ':' + (s < 10 ? '0' : '') + s;
       }, 1000);
     })
-    .catch(function() { alert('No se pudo acceder al micrófono.'); });
+    .catch(function() { showToast('No se pudo acceder al micrófono', 'error'); });
 }
 
 function stopRecording() {
@@ -1833,7 +1866,7 @@ function uploadAndSendAudio(blob, duration) {
     for (var i = 0; i < 20; i++) wv.push(Math.random());
     pushMsg({ sender: myName, text: '', url: json.secure_url, duration: duration, waveform: wv, timeStr: getTime(), ts: Date.now(), type: 'audio', isPing: false });
   })
-  .catch(function() { alert('Error al enviar el audio. Intenta de nuevo.'); })
+  .catch(function(err) { showToast('Error al enviar el audio. Intenta de nuevo', 'error'); console.error(err); })
   .finally(function() { progress.classList.remove('show'); });
 }
 
@@ -1933,7 +1966,7 @@ function uploadAndSendImage(file) {
       pushMsg({ sender: myName, text: '', url: json.secure_url, timeStr: getTime(), ts: Date.now(), type: 'image', isPing: false });
       logActivity('upload', myName + ' subió una imagen');
     })
-    .catch(function() { alert('Error al subir la imagen.'); })
+    .catch(function() { showToast('Error al subir la imagen', 'error'); })
     .finally(function() { progress.classList.remove('show'); });
 }
 
@@ -2714,7 +2747,7 @@ function doRenameChannel() {
       document.getElementById('renameChannelModal').classList.remove('show');
       if (currentChannel === ctxChannelKey) switchChannel(newName, 'channel');
     });
-  });
+  }).catch(function(err) { showToast('Error al renombrar el canal', 'error'); console.error(err); });
 }
 
 function deleteChannel() {
@@ -2743,7 +2776,7 @@ function uploadProfilePhoto(event) {
       applyProfilePhoto(url);
       if (progress) progress.classList.remove('show');
     })
-    .catch(function() { if (progress) progress.classList.remove('show'); });
+    .catch(function(err) { showToast('Error al subir la foto', 'error'); if (progress) progress.classList.remove('show'); console.error(err); });
 }
 
 function applyProfilePhoto(url) {
@@ -2794,12 +2827,12 @@ function createChannel() {
   var name = document.getElementById('newChannelName').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-');
   if (!name) return;
   db.ref('channels/' + name).once('value').then(function(snap) {
-    if (snap.exists()) { alert('Ese canal ya existe'); return; }
+    if (snap.exists()) { showToast('Ese canal ya existe', 'warn'); return; }
     db.ref('channels/' + name).set({ name: name, createdAt: Date.now(), createdBy: myName }).then(function() {
       closeCreateChannel();
       switchChannel(name, 'channel');
     });
-  });
+  }).catch(function(err) { showToast('Error al crear el canal', 'error'); console.error(err); });
 }
 
 // ── MENTION FUNCTIONS ──────────────────────
@@ -3215,6 +3248,24 @@ function scrollToBottom() {
 }
 
 function clearBlink() { clearInterval(blinkInterval); blinkInterval = null; document.title = originalTitle; }
+
+function showToast(msg, type, duration) {
+  type = type || 'info';
+  duration = duration || 3000;
+  var icons = { error:'❌', success:'✅', info:'ℹ️', warn:'⚠️' };
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.innerHTML = '<span>' + icons[type] + '</span><span>' + msg + '</span>';
+  container.appendChild(toast);
+  setTimeout(function() {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(-8px)';
+    toast.style.transition = 'opacity 0.3s, transform 0.3s';
+    setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+  }, duration);
+}
 
 function doLogout() {
   if (!confirm('¿Cerrar sesión?')) return;
