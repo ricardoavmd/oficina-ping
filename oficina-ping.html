@@ -1156,17 +1156,37 @@ function doLogin() {
   var errEl = document.getElementById('loginError');
   errEl.classList.remove('show');
   if (!user || !pass) { errEl.textContent = 'Completa todos los campos'; errEl.classList.add('show'); return; }
-  sha256(pass).then(function(passHash) {
-    db.ref('users/' + user.toLowerCase()).once('value').then(function(snap) {
-      var data = snap.val();
-      if (!data) { errEl.textContent = 'Usuario no encontrado'; errEl.classList.add('show'); return; }
-      if (data.passwordHash !== passHash) { errEl.textContent = 'Contraseña incorrecta'; errEl.classList.add('show'); return; }
+  db.ref('users/' + user.toLowerCase()).once('value').then(function(snap) {
+    var data = snap.val();
+    if (!data) { errEl.textContent = 'Usuario no encontrado'; errEl.classList.add('show'); return; }
+
+    function loginOk() {
+      // Si la cuenta es del formato viejo, migrarla a hash ahora
+      if (data.password && !data.passwordHash) {
+        sha256(pass).then(function(hash) {
+          db.ref('users/' + user.toLowerCase()).update({ passwordHash: hash, password: null });
+        });
+      }
       localStorage.setItem('ping-user', user);
       localStorage.setItem('ping-theme', data.theme || 'default');
       document.getElementById('welcomeMsg').textContent = '¡Hola, ' + user + '!';
       applyTheme(data.theme || 'default');
       showScreen('setupScreen');
-    });
+    }
+
+    // Cuenta nueva: comparar hash
+    if (data.passwordHash) {
+      sha256(pass).then(function(passHash) {
+        if (data.passwordHash !== passHash) { errEl.textContent = 'Contraseña incorrecta'; errEl.classList.add('show'); return; }
+        loginOk();
+      });
+    // Cuenta vieja: comparar texto plano y migrar
+    } else if (data.password) {
+      if (data.password !== pass) { errEl.textContent = 'Contraseña incorrecta'; errEl.classList.add('show'); return; }
+      loginOk();
+    } else {
+      errEl.textContent = 'Cuenta sin contraseña configurada'; errEl.classList.add('show');
+    }
   });
 }
 
