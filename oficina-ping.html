@@ -1083,22 +1083,46 @@ document.addEventListener('paste', function(e) {
 });
 
 document.addEventListener('click', function(e) {
+  // Reaction pickers
   if (!e.target.closest('.bubble-wrap')) {
     document.querySelectorAll('.reaction-picker.show').forEach(function(p) { p.classList.remove('show'); });
   }
+  // GIF panel
   if (!e.target.closest('.gif-panel') && !e.target.closest('.attach-menu-wrap')) {
     document.getElementById('gifPanel').classList.remove('show');
   }
-  if (!e.target.closest('.tasks-panel') && !e.target.closest('#taskHeaderBtn')) {
-    // handled by closeTasksIfOutside
+  // Sticker panel
+  if (!e.target.closest('.sticker-panel') && !e.target.closest('.attach-menu-wrap')) {
+    document.getElementById('stickerPanel').classList.remove('show');
   }
+  // Attach menu
+  if (!e.target.closest('.attach-menu-wrap')) {
+    closeAttachMenu();
+  }
+  // Header dropdown menu
+  if (!e.target.closest('#headerMenuBtn') && !e.target.closest('#headerMenuDropdown')) {
+    document.getElementById('headerMenuDropdown').classList.remove('show');
+  }
+  // Theme panel
+  if (!e.target.closest('.theme-panel') && !e.target.closest('#headerMenuBtn')) {
+    document.getElementById('themePanel').classList.remove('show');
+  }
+  // Reminder picker
   if (!e.target.closest('.reminder-picker') && !e.target.closest('.action-btn[data-reminder]')) {
     document.getElementById('reminderPicker').classList.remove('show');
     reminderMsgKey = null;
   }
-  if (!e.target.closest('.theme-panel') && !e.target.closest('#themeToggleBtn')) {
-    document.getElementById('themePanel').classList.remove('show');
+  // Channel context menu
+  if (!e.target.closest('.ctx-menu')) {
+    document.getElementById('channelCtxMenu').classList.remove('show');
+    ctxChannelKey = null;
   }
+  // Mention list
+  if (!e.target.closest('.mention-list') && !e.target.closest('#msgInput')) {
+    closeMentionList();
+  }
+  // Search overlay — close on background click (already handled by onclick attr)
+  // Log overlay — close on background click (already handled by onclick attr)
 });
 
 document.addEventListener('visibilitychange', function() {
@@ -2487,6 +2511,9 @@ function switchChannel(target, type) {
       if (!data || !data.sender) return;
       renderMessage(key, data, data.sender === myName);
     });
+    // Always scroll to bottom after loading history
+    var msgsEl = document.getElementById('messagesContainer');
+    msgsEl.scrollTop = msgsEl.scrollHeight;
   });
 
   // Listen for new messages (same ref as history load)
