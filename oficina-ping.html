@@ -540,7 +540,7 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
     <div style="width:100%;display:flex;flex-direction:column;gap:14px;">
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
         <div style="position:relative;cursor:pointer;" onclick="document.getElementById('profilePhotoInput').click()">
-          <div id="profileAvatarPreview" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--bubble-me-grad,#e879f9,#60a5fa));display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:700;overflow:hidden;" id="profileAvatarWrap">
+          <div id="profileAvatarWrap" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--bubble-me-grad,#e879f9,#60a5fa));display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:700;overflow:hidden;">
             <span id="profileAvatarInitial">?</span>
           </div>
           <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;background:var(--accent2-solid,#a855f7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid white;">📷</div>
@@ -851,6 +851,7 @@ var pinnedKey = null;
 var startTs = 0;
 var unread = 0;
 var blinkInterval = null;
+var pendingScrollCount = 0;
 var db = null;
 var originalTitle = 'Ping — Oficina';
 var currentTheme = localStorage.getItem('ping-theme') || 'default';
@@ -967,7 +968,7 @@ document.getElementById('sidebarToggleBtn').addEventListener('click', function()
 });
 document.getElementById('newChannelName').addEventListener('keydown', function(e) { if (e.key === 'Enter') createChannel(); });
 document.getElementById('renameChannelInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') doRenameChannel(); });
-document.getElementById('loadMoreBtn').addEventListener('click', loadMoreMsgs);
+// loadMoreBtn handled via event delegation in startApp
 
 // Header menu
 document.getElementById('headerMenuBtn').addEventListener('click', function(e) {
@@ -1028,7 +1029,14 @@ document.addEventListener('visibilitychange', function() {
 function showScreen(id) {
   ['loginScreen','registerScreen','recoverScreen','setupScreen'].forEach(function(s) {
     var el = document.getElementById(s);
-    if (el) el.classList.toggle('hidden', s !== id);
+    if (!el) return;
+    if (s === id) {
+      el.classList.remove('hidden');
+      el.style.display = '';
+    } else {
+      el.classList.add('hidden');
+      el.style.display = 'none';
+    }
   });
   // Reset recover screen state
   if (id === 'recoverScreen') {
@@ -1175,6 +1183,7 @@ function startApp() {
     db.ref('users/' + savedUser.toLowerCase() + '/theme').set(currentTheme);
   }
   startTs = Date.now();
+  document.getElementById('setupScreen').classList.add('hidden');
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('chatScreen').classList.add('visible');
   document.getElementById('myAvatarDisplay').textContent = myName[0].toUpperCase();
@@ -1195,10 +1204,13 @@ function startApp() {
 
   // Solicitar permiso y registrar FCM token
   if ('Notification' in window) {
-    Notification.requestPermission().then(function(perm) {
-      if (perm === 'granted') registerFCMToken();
-    });
-    if (Notification.permission === 'granted') registerFCMToken();
+    if (Notification.permission === 'granted') {
+      registerFCMToken();
+    } else if (Notification.permission === 'default') {
+      Notification.requestPermission().then(function(perm) {
+        if (perm === 'granted') registerFCMToken();
+      });
+    }
   }
 
   setupTasks();
@@ -1207,8 +1219,11 @@ function startApp() {
   var msgsEl = document.getElementById('messagesContainer');
   var scrollBtn = document.getElementById('scrollBottomBtn');
   var scrollBadge = document.getElementById('scrollBadge');
-  var pendingScrollCount = 0;
+  pendingScrollCount = 0;
 
+  msgsEl.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'loadMoreBtn') loadMoreMsgs();
+  });
   msgsEl.addEventListener('scroll', function() {
     var distFromBottom = msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight;
     if (distFromBottom > 200) {
@@ -1221,12 +1236,18 @@ function startApp() {
   });
 
   var myPresRef = db.ref('presence/' + myName);
+  myPresRef.onDisconnect().remove(); // auto-remove on disconnect
   function heartbeat() { myPresRef.set({ ts: Date.now(), name: myName }); }
   heartbeat();
   setInterval(heartbeat, 5000);
+  window.addEventListener('beforeunload', function() {
+    myPresRef.remove();
+    db.ref('typing/' + myName).remove();
+  });
 
   // Typing indicator
   var myTypingRef = db.ref('typing/' + myName);
+  myTypingRef.onDisconnect().remove();
   document.getElementById('msgInput').addEventListener('input', function() {
     myTypingRef.set({ name: myName, ts: Date.now() });
     clearTimeout(typingTimeout);
@@ -1246,20 +1267,7 @@ function startApp() {
     }
   });
 
-  // Pinned message
-  db.ref('channels/general/pinned').on('value', function(snap) {
-    var data = snap.val();
-    var bar = document.getElementById('pinnedBar');
-    if (data && data.text) {
-      pinnedKey = data.key;
-      document.getElementById('pinnedText').textContent = data.sender + ': ' + data.text;
-      bar.classList.add('show');
-    } else {
-      bar.classList.remove('show');
-      pinnedKey = null;
-    }
-  });
-
+  // Presence listener (pinned is handled by switchChannel)
   db.ref('presence').on('value', function(snap) {
     var all = snap.val() || {};
     var now = Date.now();
@@ -1347,7 +1355,9 @@ function renderMessage(key, data, isMe) {
       '<div class="reactions-row" id="reactions-' + key + '"></div>' +
     '</div>';
   container.appendChild(row);
-  container.scrollTop = container.scrollHeight;
+  // Scroll to bottom only if near bottom
+  var dist = container.scrollHeight - container.scrollTop - container.clientHeight;
+  if (dist < 120) container.scrollTop = container.scrollHeight;
 }
 
 function toggleReactionPicker(key, e) {
@@ -1581,7 +1591,9 @@ function playAudio(url, key) {
 
   currentAudio = new Audio(url);
   currentAudioKey = key;
-  currentAudio.playbackRate = audioSpeeds[audioSpeedIdx];
+  var speedBtn2 = document.getElementById('speed-' + key);
+  var speedIdx = speedBtn2 ? parseInt(speedBtn2.dataset.speedIdx || '0') : 0;
+  currentAudio.playbackRate = audioSpeeds[speedIdx];
   btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="4" width="4" height="16" rx="1" fill="white"/><rect x="14" y="4" width="4" height="16" rx="1" fill="white"/></svg>';
   currentAudio.play();
 
@@ -1601,10 +1613,14 @@ function playAudio(url, key) {
 }
 
 function toggleSpeed(key) {
-  audioSpeedIdx = (audioSpeedIdx + 1) % audioSpeeds.length;
-  var speed = audioSpeeds[audioSpeedIdx];
+  // Each audio has its own speed state via data attribute
   var speedBtn = document.getElementById('speed-' + key);
-  if (speedBtn) speedBtn.textContent = speed + 'x';
+  if (!speedBtn) return;
+  var idx = parseInt(speedBtn.dataset.speedIdx || '0');
+  idx = (idx + 1) % audioSpeeds.length;
+  speedBtn.dataset.speedIdx = idx;
+  var speed = audioSpeeds[idx];
+  speedBtn.textContent = speed + 'x';
   if (currentAudio && currentAudioKey === key) currentAudio.playbackRate = speed;
 }
 
@@ -2234,18 +2250,7 @@ function loadSidebar() {
     renderDmsList();
   });
 
-  // Also load all registered users for DMs
-  db.ref('users').once('value').then(function(snap) {
-    var all = snap.val() || {};
-    Object.keys(all).forEach(function(key) {
-      var u = all[key];
-      if (u.username && u.username !== myName) {
-        if (!document.getElementById('dm-item-' + key)) renderDmsList();
-      }
-    });
-  });
-
-  // Listen for new users
+  // Listen for users (fires immediately and on changes)
   db.ref('users').on('value', function(snap) {
     renderDmsList(snap.val() || {});
   });
@@ -2303,7 +2308,7 @@ function switchChannel(target, type) {
   // Clear messages
   var container = document.getElementById('messagesContainer');
   container.innerHTML = '<button class="load-more-btn" id="loadMoreBtn" style="margin:0 auto 8px;">⬆ Cargar mensajes anteriores</button><div class="empty-state" id="emptyState">Sin mensajes aún</div>';
-  document.getElementById('loadMoreBtn').addEventListener('click', loadMoreMsgs);
+  // loadMoreBtn click handled via delegation below
   oldestMsgKey = null; allMsgsLoaded = false;
 
   // Reset pinned
@@ -2325,7 +2330,9 @@ function switchChannel(target, type) {
     }
   });
 
-  var msgsPath = getMsgsRef().toString().replace(db.app.options.databaseURL, '').replace(/^\//, '');
+  var msgsPath = currentChannelType === 'dm'
+    ? 'dms/' + currentChannel + '/msgs'
+    : 'channels/' + currentChannel + '/msgs';
 
   // Load history
   getMsgsRef().orderByKey().limitToLast(MSGS_PER_PAGE).once('value', function(snap) {
@@ -2343,8 +2350,8 @@ function switchChannel(target, type) {
     });
   });
 
-  // Listen for new messages
-  var msgsRef = getMsgsRef();
+  // Listen for new messages (same ref as history load)
+  var msgsRef = db.ref(msgsPath);
   channelListeners[msgsPath] = true;
   msgsRef.orderByKey().limitToLast(1).on('child_added', function(snap) {
     var data = snap.val();
@@ -2369,8 +2376,8 @@ function switchChannel(target, type) {
     }
   });
 
-  // Reactions/edits listener
-  msgsRef.on('value', function(snap) {
+  // Reactions/edits listener (same ref)
+  db.ref(msgsPath).on('value', function(snap) {
     var all = snap.val() || {};
     Object.keys(all).forEach(function(key) {
       if (all[key] && all[key].reactions) updateReactionsUI(key, all[key].reactions);
@@ -2386,6 +2393,14 @@ function switchChannel(target, type) {
       }
     });
   });
+
+  // Reset unread + blink when switching channels
+  unread = 0;
+  clearBlink();
+  document.getElementById('unreadBadge').classList.remove('show');
+  pendingScrollCount = 0;
+  document.getElementById('scrollBadge').classList.remove('show');
+  document.getElementById('scrollBottomBtn').classList.remove('show');
 
   // Close sidebar on mobile
   if (window.innerWidth < 600) {
@@ -2482,10 +2497,11 @@ function loadProfilePhoto() {
 var photoCache = {};
 function getUserPhoto(username, callback) {
   var key = username.toLowerCase();
-  if (photoCache[key]) { callback(photoCache[key]); return; }
+  var cached = photoCache[key];
+  if (cached && (Date.now() - cached.ts < 300000)) { callback(cached.url); return; }
   db.ref('users/' + key + '/photoURL').once('value').then(function(snap) {
-    photoCache[key] = snap.val() || null;
-    callback(photoCache[key]);
+    photoCache[key] = { url: snap.val() || null, ts: Date.now() };
+    callback(photoCache[key].url);
   });
 }
 
@@ -2524,9 +2540,13 @@ function clearBlink() { clearInterval(blinkInterval); blinkInterval = null; docu
 function doLogout() {
   if (!confirm('¿Cerrar sesión?')) return;
   localStorage.removeItem('ping-user');
-  // Remove presence
-  if (myName) db.ref('presence/' + myName).remove();
-  location.reload();
+  localStorage.removeItem('ping-photo-' + myName);
+  if (myName) {
+    db.ref('presence/' + myName).remove().then(function() { location.reload(); });
+    db.ref('typing/' + myName).remove();
+  } else {
+    location.reload();
+  }
 }
 function getTime() { var n = new Date(); return pad(n.getHours()) + ':' + pad(n.getMinutes()); }
 function pad(n) { return n.toString().padStart(2, '0'); }
