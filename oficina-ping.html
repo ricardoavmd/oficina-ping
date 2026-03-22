@@ -1591,67 +1591,50 @@ function sendSticker(emoji) {
   pushMsg({ sender: myName, text: emoji, timeStr: getTime(), ts: Date.now(), type: 'sticker', isPing: false });
 }
 function formatText(text) {
-  // Highlight @mentions before HTML escaping
-  text = text.replace(/@(\w+)/g, function(match, name) {
-    return '\x00MENTION\x00' + name + '\x00ENDMENTION\x00';
-  });
-  // Detect Giphy image URLs (media0-4.giphy.com or giphy.com/media)
-  var giphyImgRe = /https?:\/\/(media[0-9]*\.giphy\.com\/media\/[^\s]+\.gif|i\.giphy\.com\/[^\s]+\.gif)/gi;
-  // Detect Giphy page URLs (giphy.com/gifs/...)
-  var giphyPageRe = /https?:\/\/(www\.)?giphy\.com\/gifs\/([^\s]+)/gi;
-  // Detect general URLs
   var urlRe = /https?:\/\/[^\s]+/gi;
+  var segments = [];
+  var lastIndex = 0;
+  var match;
+  urlRe.lastIndex = 0;
 
-  // First extract all Giphy media URLs to render as images
-  var result = text;
-
-  // Replace giphy direct image URLs with img tags
-  result = result.replace(giphyImgRe, function(url) {
-    return 'IMG' + url + 'END';
-  });
-
-  // For giphy page URLs, extract the ID and build media URL
-  result = result.replace(giphyPageRe, function(url, www, slug) {
-    // slug is like "funny-cat-abc123" - last part after last dash is usually the ID
-    var parts = slug.replace(/\/$/, '').split('-');
-    var id = parts[parts.length - 1];
-    if (id && id.length > 5) {
-      return 'IMGhttps://media.giphy.com/media/' + id + '/giphy.gifEND';
+  while ((match = urlRe.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', val: text.substring(lastIndex, match.index) });
     }
-    return 'LINK' + url + 'END';
-  });
-
-  // Replace remaining URLs with clickable links
-  result = result.replace(urlRe, function(url) {
-    if (url.indexOf('') === -1) {
-      return 'LINK' + url + 'END';
-    }
-    return url;
-  });
-
-  // Now escape HTML on non-token parts and build final HTML
-  var parts = result.split('');
-  var html = '';
-  var i = 0;
-  while (i < parts.length) {
-    if (parts[i] === 'IMG' && parts[i+2] === 'END') {
-      var imgUrl = parts[i+1];
-      html += '<img src="' + imgUrl + '" style="max-width:200px;max-height:200px;border-radius:10px;display:block;cursor:pointer;margin-top:4px;" onclick="openLightbox(\'' + imgUrl + '\')" />';
-      i += 3;
-    } else if (parts[i] === 'LINK' && parts[i+2] === 'END') {
-      var linkUrl = parts[i+1];
-      html += '<a href="' + linkUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;opacity:0.85;word-break:break-all;">' + esc(linkUrl) + '</a>';
-      i += 3;
+    var url = match[0];
+    if (/media[0-9]*\.giphy\.com\/media\/[^\s]+\.gif|i\.giphy\.com\/[^\s]+\.gif/i.test(url)) {
+      segments.push({ type: 'img', val: url });
+    } else if (/(?:www\.)?giphy\.com\/gifs\/([^\s]+)/i.test(url)) {
+      var gm = url.match(/giphy\.com\/gifs\/([^\s]+)/i);
+      if (gm) {
+        var slugParts = gm[1].replace(/\/$/, '').split('-');
+        var gid = slugParts[slugParts.length - 1];
+        if (gid && gid.length > 5) {
+          segments.push({ type: 'img', val: 'https://media.giphy.com/media/' + gid + '/giphy.gif' });
+        } else { segments.push({ type: 'link', val: url }); }
+      }
     } else {
-      var piece = parts[i];
-      // Render mention highlights
-      piece = piece.replace(/ MENTION (\w+) ENDMENTION /g, function(m, name) {
-        return '<span class="mention-highlight">@' + esc(name) + '</span>';
-      });
-      html += piece;
-      i++;
+      segments.push({ type: 'link', val: url });
     }
+    lastIndex = match.index + url.length;
   }
+  if (lastIndex < text.length) segments.push({ type: 'text', val: text.substring(lastIndex) });
+  if (!segments.length) segments.push({ type: 'text', val: text });
+
+  var html = '';
+  segments.forEach(function(seg) {
+    if (seg.type === 'img') {
+      html += '<img src="' + seg.val + '" style="max-width:200px;max-height:200px;border-radius:10px;display:block;cursor:pointer;margin-top:4px;" onclick="openLightbox(\'' + seg.val + '\')" />';
+    } else if (seg.type === 'link') {
+      html += '<a href="' + seg.val + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;opacity:0.85;word-break:break-all;">' + esc(seg.val) + '</a>';
+    } else {
+      var escaped = esc(seg.val);
+      escaped = escaped.replace(/@(\w+)/g, function(m, name) {
+        return '<span class="mention-highlight">@' + name + '</span>';
+      });
+      html += escaped;
+    }
+  });
   return html;
 }
 
@@ -2869,10 +2852,12 @@ function renderLinkPreview(p, container) {
   el.href = p.url;
   el.target = '_blank';
   el.rel = 'noopener';
-  el.innerHTML = (p.img ? '<img class="link-preview-img" src="' + esc(p.img) + '" onerror="this.style.display='none'" />' : '') +
+  var imgHtml = p.img ? '<img class="link-preview-img" src="' + esc(p.img) + '" />' : '';
+  var descHtml = p.desc ? '<div class="link-preview-desc">' + esc(p.desc) + '</div>' : '';
+  el.innerHTML = imgHtml +
     '<div class="link-preview-body">' +
       '<div class="link-preview-title">' + esc(p.title) + '</div>' +
-      (p.desc ? '<div class="link-preview-desc">' + esc(p.desc) + '</div>' : '') +
+      descHtml +
       '<div class="link-preview-domain">' + esc(p.domain) + '</div>' +
     '</div>';
   container.appendChild(el);
