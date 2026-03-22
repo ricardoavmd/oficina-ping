@@ -406,6 +406,55 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .ctx-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; cursor:pointer; border:none; background:none; width:100%; text-align:left; font-size:13px; color:var(--text,#1e1b4b); font-family:var(--font-ui); }
 .ctx-item:hover { background:var(--surface2,rgba(168,85,247,0.07)); }
 
+/* SEARCH PANEL */
+.search-overlay { display:none; position:fixed; inset:0; background:rgba(30,27,75,0.45); backdrop-filter:blur(4px); z-index:600; align-items:flex-start; justify-content:center; padding-top:60px; }
+.search-overlay.show { display:flex; }
+.search-panel { background:var(--surface,rgba(255,255,255,0.97)); border-radius:20px; width:90%; max-width:460px; display:flex; flex-direction:column; max-height:70vh; border:1px solid var(--border2,rgba(168,85,247,0.2)); box-shadow:0 8px 40px rgba(168,85,247,0.18); overflow:hidden; animation:popIn 0.2s cubic-bezier(0.34,1.4,0.64,1); }
+.search-input-row { display:flex; align-items:center; gap:8px; padding:12px 14px; border-bottom:1px solid var(--border,rgba(168,85,247,0.12)); }
+.search-input-row input { flex:1; border:none; outline:none; font-size:15px; background:transparent; color:var(--text,#1e1b4b); font-family:var(--font-ui); }
+.search-input-row input::placeholder { color:var(--muted2,#b8aed4); }
+.search-close-btn { background:none; border:none; font-size:18px; color:var(--muted); cursor:pointer; padding:0; }
+.search-results { overflow-y:auto; flex:1; padding:6px 0; }
+.search-result-item { padding:10px 16px; cursor:pointer; border-bottom:0.5px solid var(--border,rgba(168,85,247,0.07)); }
+.search-result-item:hover { background:var(--surface2); }
+.search-result-meta { font-size:11px; color:var(--muted); margin-bottom:3px; }
+.search-result-text { font-size:13px; color:var(--text); line-height:1.4; }
+.search-result-text mark { background:rgba(232,121,249,0.25); color:inherit; border-radius:3px; padding:0 2px; }
+.search-empty { text-align:center; padding:24px; font-size:13px; color:var(--muted2); }
+
+/* MENTION AUTOCOMPLETE */
+.mention-list { display:none; position:absolute; bottom:calc(100% + 6px); left:0; background:var(--surface,rgba(255,255,255,0.97)); border:1px solid var(--border2,rgba(168,85,247,0.2)); border-radius:14px; padding:4px; box-shadow:0 4px 20px rgba(168,85,247,0.18); z-index:300; min-width:160px; max-width:220px; }
+.mention-list.show { display:block; }
+.mention-item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:10px; cursor:pointer; }
+.mention-item:hover, .mention-item.selected { background:var(--surface2); }
+.mention-item-avatar { width:24px; height:24px; border-radius:50%; background:linear-gradient(135deg,var(--bubble-me-grad,#e879f9,#60a5fa)); display:flex; align-items:center; justify-content:center; font-size:10px; color:#fff; font-weight:700; flex-shrink:0; }
+.mention-item-name { font-size:13px; color:var(--text); }
+.mention-highlight { color:var(--accent2-solid,#a855f7); font-weight:600; }
+
+/* LINK PREVIEW */
+.link-preview { display:flex; gap:10px; margin-top:6px; padding:8px 10px; background:rgba(255,255,255,0.15); border-left:3px solid rgba(255,255,255,0.4); border-radius:0 10px 10px 0; text-decoration:none; cursor:pointer; }
+.msg-row.them .link-preview { background:var(--surface2,rgba(255,255,255,0.6)); border-left-color:var(--accent2-solid,#a855f7); }
+.link-preview-img { width:52px; height:52px; border-radius:8px; object-fit:cover; flex-shrink:0; background:var(--surface3); }
+.link-preview-body { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.link-preview-title { font-size:12px; font-weight:600; color:inherit; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.link-preview-desc { font-size:11px; opacity:0.7; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.link-preview-domain { font-size:10px; opacity:0.5; margin-top:2px; }
+
+/* ADMIN LOG PANEL */
+.log-overlay { display:none; position:fixed; inset:0; background:rgba(30,27,75,0.45); backdrop-filter:blur(4px); z-index:600; align-items:flex-end; justify-content:center; }
+.log-overlay.show { display:flex; }
+.log-panel { background:var(--surface,rgba(255,255,255,0.97)); border-radius:24px 24px 0 0; width:100%; max-width:500px; max-height:80vh; display:flex; flex-direction:column; border:1px solid var(--border2); border-bottom:none; box-shadow:0 -4px 30px rgba(168,85,247,0.12); animation:slideUp 0.25s ease; }
+.log-header { padding:14px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-shrink:0; }
+.log-title { font-size:15px; font-weight:700; color:var(--text); }
+.log-close { background:none; border:none; font-size:20px; color:var(--muted); cursor:pointer; }
+.log-list { overflow-y:auto; flex:1; padding:8px 0; }
+.log-item { padding:8px 16px; border-bottom:0.5px solid var(--border); display:flex; gap:10px; align-items:flex-start; }
+.log-item-icon { font-size:16px; flex-shrink:0; margin-top:1px; }
+.log-item-body { flex:1; }
+.log-item-text { font-size:13px; color:var(--text); }
+.log-item-time { font-size:11px; color:var(--muted2); margin-top:2px; }
+.log-empty { text-align:center; padding:24px; font-size:13px; color:var(--muted2); }
+
 /* GIF TRENDING TABS */
 .gif-tabs { display:flex; gap:6px; padding:6px 10px 0; flex-shrink:0; }
 .gif-tab { padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border2,rgba(168,85,247,0.2)); background:var(--surface2,rgba(255,255,255,0.7)); color:var(--muted,#9d86c8); -webkit-appearance:none; }
@@ -590,10 +639,12 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <div style="position:relative;">
         <button class="header-menu-btn" id="headerMenuBtn" title="Opciones">⋯</button>
         <div class="header-menu-dropdown" id="headerMenuDropdown">
+          <button class="header-menu-item" onclick="openSearch();closeHeaderMenu()"><span class="header-menu-item-icon">🔍</span>Buscar mensajes</button>
           <button class="header-menu-item" onclick="openSoundPanel();closeHeaderMenu()"><span class="header-menu-item-icon">🔔</span>Sonidos</button>
           <button class="header-menu-item" onclick="document.getElementById('tasksOverlay').classList.add('show');document.getElementById('taskInput').focus();closeHeaderMenu()"><span class="header-menu-item-icon">✅</span>Lista de tareas</button>
           <button class="header-menu-item" onclick="closeHeaderMenu();setTimeout(function(){document.getElementById('themePanel').classList.toggle('show');},50)"><span class="header-menu-item-icon">🎨</span>Cambiar tema</button>
           <div style="height:1px;background:rgba(168,85,247,0.1);margin:4px 0;"></div>
+          <button class="header-menu-item" id="adminLogBtn" style="display:none;" onclick="openLog();closeHeaderMenu()"><span class="header-menu-item-icon">📊</span>Log de actividad</button>
           <button class="header-menu-item" onclick="doLogout();closeHeaderMenu()"><span class="header-menu-item-icon">🚪</span>Cerrar sesión</button>
         </div>
       </div>
@@ -675,7 +726,8 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
           </div>
         </div>
       </div>
-      <div class="input-wrap">
+      <div class="input-wrap" style="position:relative;">
+        <div class="mention-list" id="mentionList"></div>
         <div class="input-tools">
           <div class="rec-indicator" id="recIndicator">
             <div class="rec-dot"></div>
@@ -714,6 +766,31 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 <div class="ctx-menu" id="channelCtxMenu">
   <button class="ctx-item" onclick="openRenameChannel()">✏️ Renombrar</button>
   <button class="ctx-item" onclick="deleteChannel()" style="color:#e94560;">🗑️ Eliminar</button>
+</div>
+
+<!-- SEARCH OVERLAY -->
+<div class="search-overlay" id="searchOverlay" onclick="closeSearchIfOutside(event)">
+  <div class="search-panel">
+    <div class="search-input-row">
+      <span style="font-size:16px;">🔍</span>
+      <input id="searchInput" type="text" placeholder="Buscar en todos los canales..." autocomplete="off" />
+      <button class="search-close-btn" onclick="closeSearch()">✕</button>
+    </div>
+    <div class="search-results" id="searchResults">
+      <div class="search-empty">Escribe para buscar mensajes</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN LOG OVERLAY -->
+<div class="log-overlay" id="logOverlay" onclick="closeLogIfOutside(event)">
+  <div class="log-panel">
+    <div class="log-header">
+      <span class="log-title">📊 Log de actividad</span>
+      <button class="log-close" onclick="closeLog()">✕</button>
+    </div>
+    <div class="log-list" id="logList"><div class="log-empty">Sin actividad registrada</div></div>
+  </div>
 </div>
 
 <!-- CREATE CHANNEL MODAL -->
@@ -852,6 +929,12 @@ var startTs = 0;
 var unread = 0;
 var blinkInterval = null;
 var pendingScrollCount = 0;
+var ADMIN_USER = 'rocky';
+var isAdmin = false;
+var mentionUsers = [];
+var mentionIdx = -1;
+var mentionQuery = '';
+var linkPreviewCache = {};
 var db = null;
 var originalTitle = 'Ping — Oficina';
 var currentTheme = localStorage.getItem('ping-theme') || 'default';
@@ -1194,6 +1277,14 @@ function startApp() {
   var initEl = document.getElementById('profileAvatarInitial');
   if (initEl) initEl.textContent = myName[0].toUpperCase();
   loadProfilePhoto();
+  // Set admin status
+  isAdmin = (myName.toLowerCase() === ADMIN_USER);
+  if (isAdmin) {
+    var adminBtn = document.getElementById('adminLogBtn');
+    if (adminBtn) adminBtn.style.display = '';
+  }
+  // Log user entry
+  logActivity('login', myName + ' entró a Ping');
   document.getElementById('sidebar').classList.add('visible');
   // Ensure general channel exists
   db.ref('channels/general').once('value').then(function(snap) {
@@ -1252,6 +1343,15 @@ function startApp() {
     myTypingRef.set({ name: myName, ts: Date.now() });
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(function() { myTypingRef.remove(); }, 3000);
+    handleMentionInput(this.value, this.selectionStart);
+  });
+  document.getElementById('msgInput').addEventListener('keydown', function(e) {
+    if (document.getElementById('mentionList').classList.contains('show')) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); moveMention(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); moveMention(-1); }
+      else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); selectMention(); }
+      else if (e.key === 'Escape') { closeMentionList(); }
+    }
   });
 
   db.ref('typing').on('value', function(snap) {
@@ -1358,6 +1458,14 @@ function renderMessage(key, data, isMe) {
   // Scroll to bottom only if near bottom
   var dist = container.scrollHeight - container.scrollTop - container.clientHeight;
   if (dist < 120) container.scrollTop = container.scrollHeight;
+  // Fetch link preview if text message contains a URL
+  if (data.type === 'text' && data.text) {
+    var urlInMsg = data.text.match(/https?:\/\/[^\s]+/);
+    if (urlInMsg && !data.text.match(/giphy/i)) {
+      var bubble = row.querySelector('.bubble');
+      if (bubble) setTimeout(function() { fetchLinkPreview(urlInMsg[0], bubble); }, 100);
+    }
+  }
 }
 
 function toggleReactionPicker(key, e) {
@@ -1403,10 +1511,28 @@ function sendMessage() {
   var input = document.getElementById('msgInput');
   var text = input.value.trim();
   if (!text || !myName) return;
+  // Check for @mentions
+  var mentionRe = /@(\w+)/g;
+  var mentionMatch;
+  var mentioned = [];
+  while ((mentionMatch = mentionRe.exec(text)) !== null) {
+    mentioned.push(mentionMatch[1].toLowerCase());
+  }
   var msg = { sender: myName, text: text, timeStr: getTime(), ts: Date.now(), type: 'text', isPing: false };
   if (replyTo) { msg.replyTo = replyTo; cancelReply(); }
+  if (mentioned.length) msg.mentions = mentioned;
   pushMsg(msg);
+  // Notify mentioned users
+  mentioned.forEach(function(ukey) {
+    db.ref('fcmTokens/' + ukey.replace(/[^a-z0-9]/g,'_') + '/pending').set({
+      title: '📢 ' + myName + ' te mencionó',
+      body: text.substring(0,80)
+    });
+  });
+  // Log message activity
+  logActivity('message', myName + ' envió un mensaje en ' + (currentChannelType === 'dm' ? 'DM' : '#' + currentChannel));
   input.value = '';
+  closeMentionList();
 }
 function startReply(key, e) {
   e.stopPropagation();
@@ -1445,6 +1571,10 @@ function sendSticker(emoji) {
   pushMsg({ sender: myName, text: emoji, timeStr: getTime(), ts: Date.now(), type: 'sticker', isPing: false });
 }
 function formatText(text) {
+  // Highlight @mentions before HTML escaping
+  text = text.replace(/@(\w+)/g, function(match, name) {
+    return '\x00MENTION\x00' + name + '\x00ENDMENTION\x00';
+  });
   // Detect Giphy image URLs (media0-4.giphy.com or giphy.com/media)
   var giphyImgRe = /https?:\/\/(media[0-9]*\.giphy\.com\/media\/[^\s]+\.gif|i\.giphy\.com\/[^\s]+\.gif)/gi;
   // Detect Giphy page URLs (giphy.com/gifs/...)
@@ -1493,7 +1623,12 @@ function formatText(text) {
       html += '<a href="' + linkUrl + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;opacity:0.85;word-break:break-all;">' + esc(linkUrl) + '</a>';
       i += 3;
     } else {
-      html += esc(parts[i]);
+      var piece = parts[i];
+      // Render mention highlights
+      piece = piece.replace(/ MENTION (\w+) ENDMENTION /g, function(m, name) {
+        return '<span class="mention-highlight">@' + esc(name) + '</span>';
+      });
+      html += piece;
       i++;
     }
   }
@@ -1660,6 +1795,7 @@ function uploadAndSendImage(file) {
     .then(function(json) {
       if (!json.secure_url) throw new Error('Sin URL');
       pushMsg({ sender: myName, text: '', url: json.secure_url, timeStr: getTime(), ts: Date.now(), type: 'image', isPing: false });
+      logActivity('upload', myName + ' subió una imagen');
     })
     .catch(function() { alert('Error al subir la imagen.'); })
     .finally(function() { progress.classList.remove('show'); });
@@ -2527,6 +2663,231 @@ function createChannel() {
   });
 }
 
+// ── MENTION FUNCTIONS ──────────────────────
+function handleMentionInput(text, cursor) {
+  var before = text.substring(0, cursor);
+  var atMatch = before.match(/@(\w*)$/);
+  if (!atMatch) { closeMentionList(); return; }
+  mentionQuery = atMatch[1].toLowerCase();
+  db.ref('users').once('value').then(function(snap) {
+    var all = snap.val() || {};
+    mentionUsers = Object.values(all)
+      .filter(function(u) { return u.username && u.username !== myName && u.username.toLowerCase().indexOf(mentionQuery) === 0; })
+      .map(function(u) { return u.username; })
+      .slice(0, 5);
+    if (!mentionUsers.length) { closeMentionList(); return; }
+    renderMentionList();
+  });
+}
+
+function renderMentionList() {
+  var list = document.getElementById('mentionList');
+  list.innerHTML = '';
+  mentionUsers.forEach(function(name, idx) {
+    var item = document.createElement('div');
+    item.className = 'mention-item' + (idx === mentionIdx ? ' selected' : '');
+    item.innerHTML = '<div class="mention-item-avatar">' + name[0].toUpperCase() + '</div><span class="mention-item-name">@' + esc(name) + '</span>';
+    item.addEventListener('click', function() { mentionIdx = idx; selectMention(); });
+    list.appendChild(item);
+  });
+  list.classList.add('show');
+}
+
+function moveMention(dir) {
+  mentionIdx = Math.max(0, Math.min(mentionUsers.length - 1, mentionIdx + dir));
+  renderMentionList();
+}
+
+function selectMention() {
+  if (mentionIdx < 0 || mentionIdx >= mentionUsers.length) {
+    if (mentionUsers.length) mentionIdx = 0; else { closeMentionList(); return; }
+  }
+  var chosen = mentionUsers[mentionIdx];
+  var input = document.getElementById('msgInput');
+  var val = input.value;
+  var cursor = input.selectionStart;
+  var before = val.substring(0, cursor).replace(/@\w*$/, '@' + chosen + ' ');
+  var after = val.substring(cursor);
+  input.value = before + after;
+  input.focus();
+  input.selectionStart = input.selectionEnd = before.length;
+  closeMentionList();
+}
+
+function closeMentionList() {
+  mentionIdx = -1;
+  mentionUsers = [];
+  var list = document.getElementById('mentionList');
+  list.classList.remove('show');
+  list.innerHTML = '';
+}
+
+// ── SEARCH FUNCTIONS ──────────────────────
+function openSearch() {
+  document.getElementById('searchOverlay').classList.add('show');
+  document.getElementById('searchInput').focus();
+}
+
+function closeSearch() {
+  document.getElementById('searchOverlay').classList.remove('show');
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchResults').innerHTML = '<div class="search-empty">Escribe para buscar mensajes</div>';
+}
+
+function closeSearchIfOutside(e) {
+  if (e.target === document.getElementById('searchOverlay')) closeSearch();
+}
+
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    openSearch();
+  }
+  if (e.key === 'Escape') {
+    closeSearch();
+    closeLog();
+  }
+});
+
+(function() {
+  var searchTimer;
+  document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    var q = this.value.trim();
+    if (q.length < 2) {
+      document.getElementById('searchResults').innerHTML = '<div class="search-empty">Escribe al menos 2 caracteres</div>';
+      return;
+    }
+    document.getElementById('searchResults').innerHTML = '<div class="search-empty">Buscando...</div>';
+    searchTimer = setTimeout(function() { doSearch(q); }, 350);
+  });
+})();
+
+function doSearch(q) {
+  var ql = q.toLowerCase();
+  var resultsEl = document.getElementById('searchResults');
+  var results = [];
+  var promises = [];
+
+  // Search in all channels
+  db.ref('channels').once('value').then(function(chSnap) {
+    var channels = chSnap.val() || {};
+    var chKeys = Object.keys(channels);
+    var done = 0;
+    if (!chKeys.length) { renderSearchResults([], q); return; }
+    chKeys.forEach(function(ch) {
+      db.ref('channels/' + ch + '/msgs').orderByChild('ts').once('value').then(function(snap) {
+        var msgs = snap.val() || {};
+        Object.keys(msgs).forEach(function(key) {
+          var m = msgs[key];
+          if (m && m.text && m.text.toLowerCase().indexOf(ql) !== -1) {
+            results.push({ key: key, channel: ch, channelType: 'channel', sender: m.sender, text: m.text, timeStr: m.timeStr, ts: m.ts || 0 });
+          }
+        });
+        done++;
+        if (done === chKeys.length) renderSearchResults(results.sort(function(a,b){return b.ts-a.ts;}).slice(0,30), q);
+      });
+    });
+  });
+}
+
+function renderSearchResults(results, q) {
+  var el = document.getElementById('searchResults');
+  if (!results.length) { el.innerHTML = '<div class="search-empty">Sin resultados para "' + esc(q) + '"</div>'; return; }
+  el.innerHTML = '';
+  results.forEach(function(r) {
+    var item = document.createElement('div');
+    item.className = 'search-result-item';
+    var highlighted = esc(r.text).replace(new RegExp('(' + esc(q) + ')', 'gi'), '<mark>$1</mark>');
+    item.innerHTML = '<div class="search-result-meta">#' + esc(r.channel) + ' · ' + esc(r.sender) + ' · ' + esc(r.timeStr || '') + '</div>' +
+      '<div class="search-result-text">' + highlighted + '</div>';
+    item.addEventListener('click', function() {
+      closeSearch();
+      if (currentChannel !== r.channel || currentChannelType !== r.channelType) {
+        switchChannel(r.channel, r.channelType);
+        setTimeout(function() { scrollToMsg(r.key); }, 800);
+      } else {
+        scrollToMsg(r.key);
+      }
+    });
+    el.appendChild(item);
+  });
+}
+
+// ── LINK PREVIEW ──────────────────────────
+function fetchLinkPreview(url, container) {
+  if (linkPreviewCache[url] === null) return;
+  if (linkPreviewCache[url]) { renderLinkPreview(linkPreviewCache[url], container); return; }
+  // Use allorigins to bypass CORS
+  fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var html = data.contents || '';
+      var titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      var descMatch = html.match(/<meta[^>]+(?:name=[\"']description[\"']|property=[\"']og:description[\"'])[^>]+content=[\"']([^\"']+)[\"']/i) ||
+                      html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+(?:name=[\"']description[\"']|property=[\"']og:description[\"'])/i);
+      var imgMatch  = html.match(/<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']/i) ||
+                      html.match(/<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']/i);
+      var domain = url.replace(/https?:\/\//, '').split('/')[0];
+      var preview = {
+        title: titleMatch ? titleMatch[1].trim().substring(0, 80) : domain,
+        desc:  descMatch ? descMatch[1].trim().substring(0, 120) : '',
+        img:   imgMatch ? imgMatch[1] : '',
+        domain: domain,
+        url: url
+      };
+      linkPreviewCache[url] = preview;
+      renderLinkPreview(preview, container);
+    })
+    .catch(function() { linkPreviewCache[url] = null; });
+}
+
+function renderLinkPreview(p, container) {
+  if (!container || !p) return;
+  var el = document.createElement('a');
+  el.className = 'link-preview';
+  el.href = p.url;
+  el.target = '_blank';
+  el.rel = 'noopener';
+  el.innerHTML = (p.img ? '<img class="link-preview-img" src="' + esc(p.img) + '" onerror="this.style.display='none'" />' : '') +
+    '<div class="link-preview-body">' +
+      '<div class="link-preview-title">' + esc(p.title) + '</div>' +
+      (p.desc ? '<div class="link-preview-desc">' + esc(p.desc) + '</div>' : '') +
+      '<div class="link-preview-domain">' + esc(p.domain) + '</div>' +
+    '</div>';
+  container.appendChild(el);
+}
+
+// ── ADMIN LOG FUNCTIONS ───────────────────
+function logActivity(type, text) {
+  db.ref('activityLog').push({ type: type, text: text, ts: Date.now(), timeStr: getTime() });
+}
+
+function openLog() {
+  if (!isAdmin) return;
+  var list = document.getElementById('logList');
+  list.innerHTML = '<div class="log-empty">Cargando...</div>';
+  document.getElementById('logOverlay').classList.add('show');
+  db.ref('activityLog').orderByChild('ts').limitToLast(100).once('value').then(function(snap) {
+    var all = snap.val() || {};
+    var entries = Object.values(all).sort(function(a,b){return b.ts-a.ts;});
+    if (!entries.length) { list.innerHTML = '<div class="log-empty">Sin actividad registrada</div>'; return; }
+    list.innerHTML = '';
+    var icons = { login:'🟢', logout:'🔴', message:'💬', channel:'📁', upload:'📎' };
+    entries.forEach(function(e) {
+      var item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = '<div class="log-item-icon">' + (icons[e.type] || '📝') + '</div>' +
+        '<div class="log-item-body"><div class="log-item-text">' + esc(e.text) + '</div>' +
+        '<div class="log-item-time">' + esc(e.timeStr || '') + '</div></div>';
+      list.appendChild(item);
+    });
+  });
+}
+
+function closeLog() { document.getElementById('logOverlay').classList.remove('show'); }
+function closeLogIfOutside(e) { if (e.target === document.getElementById('logOverlay')) closeLog(); }
+
 function scrollToBottom() {
   var msgsEl = document.getElementById('messagesContainer');
   msgsEl.scrollTo({ top: msgsEl.scrollHeight, behavior: 'smooth' });
@@ -2542,6 +2903,7 @@ function doLogout() {
   localStorage.removeItem('ping-user');
   localStorage.removeItem('ping-photo-' + myName);
   if (myName) {
+    logActivity('logout', myName + ' cerró sesión');
     db.ref('presence/' + myName).remove().then(function() { location.reload(); });
     db.ref('typing/' + myName).remove();
   } else {
