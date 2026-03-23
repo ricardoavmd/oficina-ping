@@ -139,12 +139,20 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
 .msg-row.me .reaction-picker { left:auto; right:0; }
 .r-opt { font-size:20px; cursor:pointer; line-height:1; padding:2px; }
 
-.sticker-panel { display:none; padding:10px 12px; border-top:1px solid var(--border,rgba(232,121,249,0.15)); background:var(--surface2,rgba(255,255,255,0.7)); flex-shrink:0; }
-.sticker-panel.show { display:block; }
-.sticker-panel-title { font-size:11px; font-weight:700; color:var(--muted,#9d86c8); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px; }
-.sticker-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
-.sticker-item { font-size:26px; cursor:pointer; text-align:center; line-height:1; padding:4px; border-radius:8px; }
-.sticker-item:hover { background:rgba(168,85,247,0.1); }
+.sticker-panel { display:none; border-top:1px solid var(--border,rgba(232,121,249,0.15)); background:var(--surface2,rgba(255,255,255,0.7)); flex-shrink:0; flex-direction:column; max-height:280px; }
+.sticker-panel.show { display:flex; }
+.sticker-panel-header { padding:8px 12px 6px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; border-bottom:1px solid var(--border,rgba(168,85,247,0.1)); }
+.sticker-panel-title { font-size:11px; font-weight:700; color:var(--muted,#9d86c8); text-transform:uppercase; letter-spacing:0.6px; }
+.sticker-upload-btn { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--accent2-solid,#a855f7); background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.2); border-radius:20px; padding:3px 10px; cursor:pointer; -webkit-appearance:none; }
+.sticker-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:10px 12px; overflow-y:auto; flex:1; }
+.sticker-item { font-size:30px; cursor:pointer; text-align:center; line-height:1; padding:6px 4px; border-radius:10px; transition:background 0.12s,transform 0.1s; }
+.sticker-item:hover { background:rgba(168,85,247,0.1); transform:scale(1.15); }
+.sticker-item-img { width:56px; height:56px; object-fit:contain; border-radius:8px; cursor:pointer; padding:2px; transition:transform 0.1s; display:block; margin:0 auto; }
+.sticker-item-img:hover { transform:scale(1.15); }
+.sticker-item-custom { position:relative; border-radius:10px; padding:4px; transition:background 0.12s; }
+.sticker-item-custom:hover { background:rgba(168,85,247,0.1); }
+.sticker-delete-btn { display:none; position:absolute; top:-4px; right:-4px; width:16px; height:16px; background:#e24b4a; border-radius:50%; border:none; color:#fff; font-size:9px; cursor:pointer; align-items:center; justify-content:center; line-height:1; }
+.sticker-item-custom:hover .sticker-delete-btn { display:flex; }
 
 .input-area { padding:10px 12px; display:flex; gap:8px; align-items:flex-end; border-top:1px solid var(--border,rgba(232,121,249,0.15)); background:var(--header-bg,rgba(255,255,255,0.7)); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); flex-shrink:0; transition:background 0.4s; }
 .input-wrap { flex:1; display:flex; flex-direction:column; gap:6px; }
@@ -770,11 +778,17 @@ input[type="text"]:focus { border-color:var(--accent2-solid,#a855f7); box-shadow
       <div class="gif-grid" id="gifGrid"><div class="gif-loading">Cargando trending...</div></div>
     </div>
     <div class="sticker-panel" id="stickerPanel">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div class="sticker-panel-title" style="margin-bottom:0;">Stickers</div>
-        <button onclick="document.getElementById('stickerPanel').classList.remove('show')" style="background:none;border:none;font-size:16px;color:var(--muted);cursor:pointer;line-height:1;padding:2px 4px;">✕</button>
+      <div class="sticker-panel-header">
+        <span class="sticker-panel-title">Stickers</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="sticker-upload-btn" onclick="document.getElementById('stickerUploadInput').click()" aria-label="Subir sticker">
+            ＋ Subir sticker
+          </button>
+          <button onclick="document.getElementById('stickerPanel').classList.remove('show')" style="background:none;border:none;font-size:16px;color:var(--muted);cursor:pointer;line-height:1;padding:2px 4px;" aria-label="Cerrar stickers">✕</button>
+        </div>
       </div>
       <div class="sticker-grid" id="stickerGrid"></div>
+      <input type="file" id="stickerUploadInput" accept="image/*" style="display:none;" multiple />
     </div>
     <div class="input-area">
       <div class="attach-menu-wrap">
@@ -1113,14 +1127,13 @@ applyTheme(currentTheme);
   }
 })();
 
-// Sticker grid
-var grid = document.getElementById('stickerGrid');
-STICKERS.forEach(function(s) {
-  var el = document.createElement('div');
-  el.className = 'sticker-item';
-  el.textContent = s;
-  el.addEventListener('click', function() { sendSticker(s); toggleStickers(); });
-  grid.appendChild(el);
+// Sticker grid — built after login via buildStickerGrid()
+document.getElementById('stickerUploadInput').addEventListener('change', function(e) {
+  var files = Array.from(e.target.files);
+  e.target.value = '';
+  if (!files.length) return;
+  if (files.length > 10) { showToast('Máximo 10 stickers a la vez', 'warn'); files = files.slice(0, 10); }
+  uploadCustomStickers(files);
 });
 
 // Botones
@@ -1461,6 +1474,7 @@ function startApp() {
   });
   loadSidebar();
   switchChannel('general', 'channel');
+  buildStickerGrid();
 
   // Solicitar permiso y registrar FCM token
   if ('Notification' in window) {
@@ -1601,6 +1615,10 @@ function renderMessage(key, data, isMe) {
     '</div>';
   } else if (data.type === 'sticker') {
     bubbleContent = '<span style="font-size:48px;line-height:1;">' + esc(data.text) + '</span>';
+    bubbleClass = 'bubble sticker';
+  } else if (data.type === 'custom-sticker') {
+    var csUrl = data.text || '';
+    bubbleContent = '<img src="' + csUrl + '" alt="Sticker" loading="lazy" style="width:120px;height:120px;object-fit:contain;border-radius:12px;display:block;cursor:pointer;" onclick="openLightbox(this.src)" />';
     bubbleClass = 'bubble sticker';
   } else {
     bubbleContent = formatText(data.text) + (data.edited ? '<span class="edited-tag">(editado)</span>' : '');
@@ -1972,6 +1990,107 @@ function uploadAndSendImage(file) {
 
 function openLightbox(url) { document.getElementById('lightboxImg').src = url; document.getElementById('lightbox').classList.add('show'); }
 function toggleStickers() { document.getElementById('stickerPanel').classList.toggle('show'); }
+
+function buildStickerGrid() {
+  var grid = document.getElementById('stickerGrid');
+  grid.innerHTML = '';
+  // Default emoji stickers
+  STICKERS.forEach(function(s) {
+    var el = document.createElement('div');
+    el.className = 'sticker-item';
+    el.textContent = s;
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', 'Sticker ' + s);
+    el.addEventListener('click', function() { sendSticker(s); document.getElementById('stickerPanel').classList.remove('show'); });
+    grid.appendChild(el);
+  });
+  // Custom stickers from Firebase
+  if (!myName) return;
+  db.ref('customStickers/' + myName.toLowerCase()).once('value').then(function(snap) {
+    var stickers = snap.val() || {};
+    Object.keys(stickers).forEach(function(key) {
+      var url = stickers[key].url;
+      if (!url) return;
+      addCustomStickerToGrid(key, url, grid);
+    });
+  }).catch(function(err) { console.error('Error loading custom stickers:', err); });
+}
+
+function addCustomStickerToGrid(key, url, grid) {
+  grid = grid || document.getElementById('stickerGrid');
+  var wrap = document.createElement('div');
+  wrap.className = 'sticker-item-custom';
+  wrap.id = 'csticker-' + key;
+  var img = document.createElement('img');
+  img.src = url;
+  img.className = 'sticker-item-img';
+  img.alt = 'Sticker personalizado';
+  img.loading = 'lazy';
+  img.addEventListener('click', function() {
+    sendCustomSticker(url);
+    document.getElementById('stickerPanel').classList.remove('show');
+  });
+  var delBtn = document.createElement('button');
+  delBtn.className = 'sticker-delete-btn';
+  delBtn.innerHTML = '✕';
+  delBtn.title = 'Eliminar sticker';
+  delBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    deleteCustomSticker(key, wrap);
+  });
+  wrap.appendChild(img);
+  wrap.appendChild(delBtn);
+  grid.appendChild(wrap);
+}
+
+function uploadCustomStickers(files) {
+  var progress = document.getElementById('uploadProgress');
+  if (progress) { progress.textContent = 'Subiendo stickers...'; progress.classList.add('show'); }
+  var uploaded = 0;
+  files.forEach(function(file) {
+    // Validate size (max 1MB per sticker)
+    if (file.size > 1024 * 1024) {
+      showToast(file.name + ' es muy grande (máx 1MB)', 'warn');
+      uploaded++;
+      if (uploaded === files.length && progress) progress.classList.remove('show');
+      return;
+    }
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+    fetch('https://api.cloudinary.com/v1_1/' + CLOUDINARY_CLOUD + '/image/upload', { method:'POST', body:formData })
+      .then(function(r) { return r.json(); })
+      .then(function(json) {
+        if (!json.secure_url) throw new Error('Sin URL');
+        var key = 'sticker_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        db.ref('customStickers/' + myName.toLowerCase() + '/' + key).set({
+          url: json.secure_url,
+          ts: Date.now()
+        }).then(function() {
+          addCustomStickerToGrid(key, json.secure_url);
+          showToast('Sticker subido ✓', 'success');
+        });
+      })
+      .catch(function(err) { showToast('Error al subir sticker', 'error'); console.error(err); })
+      .finally(function() {
+        uploaded++;
+        if (uploaded === files.length && progress) progress.classList.remove('show');
+      });
+  });
+}
+
+function deleteCustomSticker(key, el) {
+  db.ref('customStickers/' + myName.toLowerCase() + '/' + key).remove().then(function() {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+    showToast('Sticker eliminado', 'info');
+  }).catch(function(err) { showToast('Error al eliminar sticker', 'error'); });
+}
+
+function sendCustomSticker(url) {
+  if (!myName) return;
+  pushMsg({ sender: myName, text: url, timeStr: getTime(), ts: Date.now(), type: 'custom-sticker', isPing: false });
+  logActivity('message', myName + ' envió un sticker en ' + (currentChannelType === 'dm' ? 'DM' : '#' + currentChannel));
+}
 
 function closeHeaderMenu() { document.getElementById('headerMenuDropdown').classList.remove('show'); }
 
