@@ -17,7 +17,6 @@ var messaging = firebase.messaging();
 messaging.onBackgroundMessage(function(payload) {
   var title = payload.notification ? payload.notification.title : '📨 Ping Oficina';
   var body  = payload.notification ? payload.notification.body  : 'Tienes un mensaje nuevo';
-  var icon  = '/oficina-ping.html';
 
   return self.registration.showNotification(title, {
     body: body,
@@ -38,16 +37,16 @@ self.addEventListener('notificationclick', function(e) {
           return list[i].focus();
         }
       }
-      return clients.openWindow('/oficina-ping.html');
+      return clients.openWindow('/oficina-ping/oficina-ping.html');
     })
   );
 });
 
 // Cache offline
-var CACHE = 'ping-v3';
+var CACHE = 'ping-v4';
 self.addEventListener('install', function(e) {
   e.waitUntil(caches.open(CACHE).then(function(cache) {
-    return cache.addAll(['/oficina-ping.html']);
+    return cache.addAll(['/oficina-ping/oficina-ping.html']);
   }));
   self.skipWaiting();
 });
